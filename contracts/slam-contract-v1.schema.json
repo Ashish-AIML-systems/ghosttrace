@@ -1,7 +1,7 @@
 {
   "contract_version": "1.0.0",
   "models": {
-    "ActivityEvent": {
+    "Activity": {
       "additionalProperties": false,
       "properties": {
         "activity_id": {
@@ -66,7 +66,7 @@
         "activity_type",
         "occurred_at"
       ],
-      "title": "ActivityEvent",
+      "title": "Activity",
       "type": "object"
     },
     "AuditRequest": {
@@ -628,9 +628,60 @@
       "title": "CaseContext",
       "type": "object"
     },
+    "CurrentIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "email": {
+          "title": "Email",
+          "type": "string"
+        },
+        "email_hash": {
+          "title": "Email Hash",
+          "type": "string"
+        },
+        "email_normalized": {
+          "title": "Email Normalized",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "phone": {
+          "title": "Phone",
+          "type": "string"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "user_id": {
+          "minLength": 1,
+          "title": "User Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_id",
+        "name",
+        "email",
+        "email_normalized",
+        "phone",
+        "email_hash",
+        "updated_at",
+        "source_id"
+      ],
+      "title": "CurrentIdentity",
+      "type": "object"
+    },
     "EvidenceBundle": {
       "$defs": {
-        "ActivityEvent": {
+        "Activity": {
           "additionalProperties": false,
           "properties": {
             "activity_id": {
@@ -695,28 +746,190 @@
             "activity_type",
             "occurred_at"
           ],
-          "title": "ActivityEvent",
+          "title": "Activity",
           "type": "object"
         },
-        "EvidenceNature": {
-          "enum": [
-            "CLAIM",
-            "OBSERVATION"
-          ],
-          "title": "EvidenceNature",
-          "type": "string"
-        },
-        "IdentityChange": {
+        "CurrentIdentity": {
           "additionalProperties": false,
           "properties": {
+            "email": {
+              "title": "Email",
+              "type": "string"
+            },
+            "email_hash": {
+              "title": "Email Hash",
+              "type": "string"
+            },
+            "email_normalized": {
+              "title": "Email Normalized",
+              "type": "string"
+            },
+            "name": {
+              "title": "Name",
+              "type": "string"
+            },
+            "phone": {
+              "title": "Phone",
+              "type": "string"
+            },
+            "source_id": {
+              "title": "Source Id",
+              "type": "string"
+            },
+            "updated_at": {
+              "format": "date-time",
+              "title": "Updated At",
+              "type": "string"
+            },
+            "user_id": {
+              "minLength": 1,
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "user_id",
+            "name",
+            "email",
+            "email_normalized",
+            "phone",
+            "email_hash",
+            "updated_at",
+            "source_id"
+          ],
+          "title": "CurrentIdentity",
+          "type": "object"
+        },
+        "ExtractionProvenance": {
+          "additionalProperties": false,
+          "properties": {
+            "input_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Input Tokens"
+            },
+            "latency_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Latency Ms"
+            },
+            "model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Model"
+            },
+            "model_provider": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Model Provider"
+            },
+            "output_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Output Tokens"
+            },
+            "parser_name": {
+              "minLength": 1,
+              "title": "Parser Name",
+              "type": "string"
+            },
+            "parser_version": {
+              "minLength": 1,
+              "title": "Parser Version",
+              "type": "string"
+            },
+            "prompt_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Prompt Version"
+            },
+            "request_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Request Id"
+            },
+            "schema_version": {
+              "default": "1.0.0",
+              "title": "Schema Version",
+              "type": "string"
+            },
+            "source_sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Source Sha256",
+              "type": "string"
+            }
+          },
+          "required": [
+            "parser_name",
+            "parser_version",
+            "source_sha256"
+          ],
+          "title": "ExtractionProvenance",
+          "type": "object"
+        },
+        "IdentityChangeEvent": {
+          "additionalProperties": false,
+          "properties": {
+            "audit_id": {
+              "minLength": 1,
+              "title": "Audit Id",
+              "type": "string"
+            },
             "changed_at": {
               "format": "date-time",
               "title": "Changed At",
-              "type": "string"
-            },
-            "event_id": {
-              "minLength": 1,
-              "title": "Event Id",
               "type": "string"
             },
             "field_name": {
@@ -759,47 +972,46 @@
             }
           },
           "required": [
-            "event_id",
+            "audit_id",
             "user_id",
             "field_name",
             "changed_at",
             "source_id"
           ],
-          "title": "IdentityChange",
+          "title": "IdentityChangeEvent",
           "type": "object"
         },
-        "IdentitySnapshot": {
+        "ImageRegionLocator": {
           "additionalProperties": false,
           "properties": {
-            "identifiers": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "title": "Identifiers",
-              "type": "object"
+            "height": {
+              "exclusiveMinimum": 0,
+              "title": "Height",
+              "type": "integer"
             },
-            "source_id": {
-              "title": "Source Id",
-              "type": "string"
+            "width": {
+              "exclusiveMinimum": 0,
+              "title": "Width",
+              "type": "integer"
             },
-            "updated_at": {
-              "format": "date-time",
-              "title": "Updated At",
-              "type": "string"
+            "x": {
+              "minimum": 0,
+              "title": "X",
+              "type": "integer"
             },
-            "user_id": {
-              "minLength": 1,
-              "title": "User Id",
-              "type": "string"
+            "y": {
+              "minimum": 0,
+              "title": "Y",
+              "type": "integer"
             }
           },
           "required": [
-            "user_id",
-            "identifiers",
-            "updated_at",
-            "source_id"
+            "x",
+            "y",
+            "width",
+            "height"
           ],
-          "title": "IdentitySnapshot",
+          "title": "ImageRegionLocator",
           "type": "object"
         },
         "IngestionIssue": {
@@ -810,10 +1022,17 @@
               "title": "Code",
               "type": "string"
             },
-            "issue_id": {
-              "minLength": 1,
-              "title": "Issue Id",
-              "type": "string"
+            "locator": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Locator"
             },
             "message": {
               "minLength": 1,
@@ -837,7 +1056,6 @@
             }
           },
           "required": [
-            "issue_id",
             "severity",
             "code",
             "message"
@@ -847,25 +1065,58 @@
         },
         "IssueSeverity": {
           "enum": [
-            "WARNING",
-            "ERROR",
-            "BLOCKING"
+            "info",
+            "warning",
+            "error"
           ],
           "title": "IssueSeverity",
           "type": "string"
         },
+        "LineRangeLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "end": {
+              "minimum": 1,
+              "title": "End",
+              "type": "integer"
+            },
+            "start": {
+              "minimum": 1,
+              "title": "Start",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "start",
+            "end"
+          ],
+          "title": "LineRangeLocator",
+          "type": "object"
+        },
         "Observation": {
           "additionalProperties": false,
+          "description": "Normalized fact with an ID equal to SHA-256 of its canonical JSON payload.",
           "properties": {
             "category": {
               "minLength": 1,
               "title": "Category",
               "type": "string"
             },
-            "effective_at": {
+            "effective_time": {
               "format": "date-time",
-              "title": "Effective At",
+              "title": "Effective Time",
               "type": "string"
+            },
+            "extraction": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ExtractionProvenance"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "fields": {
               "additionalProperties": true,
@@ -879,31 +1130,39 @@
               "title": "Identifiers",
               "type": "object"
             },
-            "nature": {
-              "$ref": "#/$defs/EvidenceNature"
-            },
             "observation_id": {
-              "minLength": 1,
+              "pattern": "^[0-9a-f]{64}$",
               "title": "Observation Id",
               "type": "string"
             },
-            "provenance": {
-              "items": {
-                "$ref": "#/$defs/SourceSpan"
-              },
-              "minItems": 1,
-              "title": "Provenance",
-              "type": "array"
+            "observed_state": {
+              "minLength": 1,
+              "title": "Observed State",
+              "type": "string"
             },
             "resource_id": {
               "minLength": 1,
               "title": "Resource Id",
               "type": "string"
             },
-            "state": {
-              "minLength": 1,
-              "title": "State",
-              "type": "string"
+            "source_kind": {
+              "$ref": "#/$defs/SourceKind"
+            },
+            "spans": {
+              "items": {
+                "$ref": "#/$defs/SourceSpan"
+              },
+              "minItems": 1,
+              "title": "Spans",
+              "type": "array"
+            },
+            "subject_hints": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Subject Hints",
+              "type": "array"
             },
             "system_id": {
               "minLength": 1,
@@ -916,12 +1175,84 @@
             "system_id",
             "resource_id",
             "category",
-            "state",
-            "effective_at",
-            "nature",
-            "provenance"
+            "observed_state",
+            "effective_time",
+            "source_kind",
+            "spans"
           ],
           "title": "Observation",
+          "type": "object"
+        },
+        "ParseStatus": {
+          "enum": [
+            "parsed",
+            "partial",
+            "failed"
+          ],
+          "title": "ParseStatus",
+          "type": "string"
+        },
+        "PdfPositionLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "page": {
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "x0": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "X0"
+            },
+            "x1": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "X1"
+            },
+            "y0": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Y0"
+            },
+            "y1": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Y1"
+            }
+          },
+          "required": [
+            "page"
+          ],
+          "title": "PdfPositionLocator",
           "type": "object"
         },
         "PolicyRule": {
@@ -968,51 +1299,53 @@
           "title": "PolicyRule",
           "type": "object"
         },
+        "SourceKind": {
+          "enum": [
+            "csv",
+            "json",
+            "log",
+            "text",
+            "pdf",
+            "image",
+            "sql"
+          ],
+          "title": "SourceKind",
+          "type": "string"
+        },
         "SourceRecord": {
           "additionalProperties": false,
+          "description": "One evidence manifest entry; ``source_id`` is its participant-visible file_id.",
           "properties": {
             "captured_at": {
               "format": "date-time",
               "title": "Captured At",
               "type": "string"
             },
+            "extraction": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ExtractionProvenance"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
             "kind": {
-              "minLength": 1,
-              "title": "Kind",
-              "type": "string"
+              "$ref": "#/$defs/SourceKind"
             },
             "origin": {
               "minLength": 1,
               "title": "Origin",
               "type": "string"
             },
-            "parser_name": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Parser Name"
+            "parse_status": {
+              "$ref": "#/$defs/ParseStatus"
             },
-            "parser_version": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "default": null,
-              "title": "Parser Version"
-            },
-            "relative_path": {
+            "path": {
               "minLength": 1,
-              "title": "Relative Path",
+              "title": "Path",
               "type": "string"
             },
             "sha256": {
@@ -1030,9 +1363,10 @@
             "source_id",
             "kind",
             "origin",
-            "relative_path",
+            "path",
             "captured_at",
-            "sha256"
+            "sha256",
+            "parse_status"
           ],
           "title": "SourceRecord",
           "type": "object"
@@ -1040,15 +1374,56 @@
         "SourceSpan": {
           "additionalProperties": false,
           "properties": {
-            "locator": {
-              "minLength": 1,
-              "title": "Locator",
-              "type": "string"
+            "image_region": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ImageRegionLocator"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "json_path": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Json Path"
+            },
+            "line_range": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LineRangeLocator"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "pdf_position": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/PdfPositionLocator"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "quote": {
               "anyOf": [
                 {
-                  "maxLength": 1000,
+                  "maxLength": 500,
                   "type": "string"
                 },
                 {
@@ -1062,13 +1437,44 @@
               "minLength": 1,
               "title": "Source Id",
               "type": "string"
+            },
+            "table_row": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TableRowLocator"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             }
           },
           "required": [
-            "source_id",
-            "locator"
+            "source_id"
           ],
           "title": "SourceSpan",
+          "type": "object"
+        },
+        "TableRowLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "row": {
+              "minimum": 1,
+              "title": "Row",
+              "type": "integer"
+            },
+            "table": {
+              "minLength": 1,
+              "title": "Table",
+              "type": "string"
+            }
+          },
+          "required": [
+            "table",
+            "row"
+          ],
+          "title": "TableRowLocator",
           "type": "object"
         }
       },
@@ -1077,7 +1483,7 @@
         "activities": {
           "default": [],
           "items": {
-            "$ref": "#/$defs/ActivityEvent"
+            "$ref": "#/$defs/Activity"
           },
           "title": "Activities",
           "type": "array"
@@ -1090,7 +1496,7 @@
         "current_identities": {
           "default": [],
           "items": {
-            "$ref": "#/$defs/IdentitySnapshot"
+            "$ref": "#/$defs/CurrentIdentity"
           },
           "title": "Current Identities",
           "type": "array"
@@ -1098,7 +1504,7 @@
         "identity_changes": {
           "default": [],
           "items": {
-            "$ref": "#/$defs/IdentityChange"
+            "$ref": "#/$defs/IdentityChangeEvent"
           },
           "title": "Identity Changes",
           "type": "array"
@@ -1137,6 +1543,125 @@
         }
       },
       "title": "EvidenceBundle",
+      "type": "object"
+    },
+    "ExtractionProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "input_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Input Tokens"
+        },
+        "latency_ms": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Latency Ms"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "model_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model Provider"
+        },
+        "output_tokens": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Tokens"
+        },
+        "parser_name": {
+          "minLength": 1,
+          "title": "Parser Name",
+          "type": "string"
+        },
+        "parser_version": {
+          "minLength": 1,
+          "title": "Parser Version",
+          "type": "string"
+        },
+        "prompt_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Prompt Version"
+        },
+        "request_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Request Id"
+        },
+        "schema_version": {
+          "default": "1.0.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "parser_name",
+        "parser_version",
+        "source_sha256"
+      ],
+      "title": "ExtractionProvenance",
       "type": "object"
     },
     "GraphEdge": {
@@ -1180,17 +1705,17 @@
       "title": "GraphEdge",
       "type": "object"
     },
-    "IdentityChange": {
+    "IdentityChangeEvent": {
       "additionalProperties": false,
       "properties": {
+        "audit_id": {
+          "minLength": 1,
+          "title": "Audit Id",
+          "type": "string"
+        },
         "changed_at": {
           "format": "date-time",
           "title": "Changed At",
-          "type": "string"
-        },
-        "event_id": {
-          "minLength": 1,
-          "title": "Event Id",
           "type": "string"
         },
         "field_name": {
@@ -1233,13 +1758,13 @@
         }
       },
       "required": [
-        "event_id",
+        "audit_id",
         "user_id",
         "field_name",
         "changed_at",
         "source_id"
       ],
-      "title": "IdentityChange",
+      "title": "IdentityChangeEvent",
       "type": "object"
     },
     "IdentityLink": {
@@ -1324,47 +1849,46 @@
       "title": "IdentityLink",
       "type": "object"
     },
-    "IdentitySnapshot": {
+    "ImageRegionLocator": {
       "additionalProperties": false,
       "properties": {
-        "identifiers": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "title": "Identifiers",
-          "type": "object"
+        "height": {
+          "exclusiveMinimum": 0,
+          "title": "Height",
+          "type": "integer"
         },
-        "source_id": {
-          "title": "Source Id",
-          "type": "string"
+        "width": {
+          "exclusiveMinimum": 0,
+          "title": "Width",
+          "type": "integer"
         },
-        "updated_at": {
-          "format": "date-time",
-          "title": "Updated At",
-          "type": "string"
+        "x": {
+          "minimum": 0,
+          "title": "X",
+          "type": "integer"
         },
-        "user_id": {
-          "minLength": 1,
-          "title": "User Id",
-          "type": "string"
+        "y": {
+          "minimum": 0,
+          "title": "Y",
+          "type": "integer"
         }
       },
       "required": [
-        "user_id",
-        "identifiers",
-        "updated_at",
-        "source_id"
+        "x",
+        "y",
+        "width",
+        "height"
       ],
-      "title": "IdentitySnapshot",
+      "title": "ImageRegionLocator",
       "type": "object"
     },
     "IngestionIssue": {
       "$defs": {
         "IssueSeverity": {
           "enum": [
-            "WARNING",
-            "ERROR",
-            "BLOCKING"
+            "info",
+            "warning",
+            "error"
           ],
           "title": "IssueSeverity",
           "type": "string"
@@ -1377,10 +1901,17 @@
           "title": "Code",
           "type": "string"
         },
-        "issue_id": {
-          "minLength": 1,
-          "title": "Issue Id",
-          "type": "string"
+        "locator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
         },
         "message": {
           "minLength": 1,
@@ -1404,7 +1935,6 @@
         }
       },
       "required": [
-        "issue_id",
         "severity",
         "code",
         "message"
@@ -1412,28 +1942,331 @@
       "title": "IngestionIssue",
       "type": "object"
     },
+    "LineRangeLocator": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "minimum": 1,
+          "title": "End",
+          "type": "integer"
+        },
+        "start": {
+          "minimum": 1,
+          "title": "Start",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "LineRangeLocator",
+      "type": "object"
+    },
     "Observation": {
       "$defs": {
-        "EvidenceNature": {
-          "enum": [
-            "CLAIM",
-            "OBSERVATION"
+        "ExtractionProvenance": {
+          "additionalProperties": false,
+          "properties": {
+            "input_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Input Tokens"
+            },
+            "latency_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Latency Ms"
+            },
+            "model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Model"
+            },
+            "model_provider": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Model Provider"
+            },
+            "output_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Output Tokens"
+            },
+            "parser_name": {
+              "minLength": 1,
+              "title": "Parser Name",
+              "type": "string"
+            },
+            "parser_version": {
+              "minLength": 1,
+              "title": "Parser Version",
+              "type": "string"
+            },
+            "prompt_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Prompt Version"
+            },
+            "request_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Request Id"
+            },
+            "schema_version": {
+              "default": "1.0.0",
+              "title": "Schema Version",
+              "type": "string"
+            },
+            "source_sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Source Sha256",
+              "type": "string"
+            }
+          },
+          "required": [
+            "parser_name",
+            "parser_version",
+            "source_sha256"
           ],
-          "title": "EvidenceNature",
+          "title": "ExtractionProvenance",
+          "type": "object"
+        },
+        "ImageRegionLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "height": {
+              "exclusiveMinimum": 0,
+              "title": "Height",
+              "type": "integer"
+            },
+            "width": {
+              "exclusiveMinimum": 0,
+              "title": "Width",
+              "type": "integer"
+            },
+            "x": {
+              "minimum": 0,
+              "title": "X",
+              "type": "integer"
+            },
+            "y": {
+              "minimum": 0,
+              "title": "Y",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "title": "ImageRegionLocator",
+          "type": "object"
+        },
+        "LineRangeLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "end": {
+              "minimum": 1,
+              "title": "End",
+              "type": "integer"
+            },
+            "start": {
+              "minimum": 1,
+              "title": "Start",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "start",
+            "end"
+          ],
+          "title": "LineRangeLocator",
+          "type": "object"
+        },
+        "PdfPositionLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "page": {
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "x0": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "X0"
+            },
+            "x1": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "X1"
+            },
+            "y0": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Y0"
+            },
+            "y1": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Y1"
+            }
+          },
+          "required": [
+            "page"
+          ],
+          "title": "PdfPositionLocator",
+          "type": "object"
+        },
+        "SourceKind": {
+          "enum": [
+            "csv",
+            "json",
+            "log",
+            "text",
+            "pdf",
+            "image",
+            "sql"
+          ],
+          "title": "SourceKind",
           "type": "string"
         },
         "SourceSpan": {
           "additionalProperties": false,
           "properties": {
-            "locator": {
-              "minLength": 1,
-              "title": "Locator",
-              "type": "string"
+            "image_region": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ImageRegionLocator"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "json_path": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Json Path"
+            },
+            "line_range": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LineRangeLocator"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "pdf_position": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/PdfPositionLocator"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "quote": {
               "anyOf": [
                 {
-                  "maxLength": 1000,
+                  "maxLength": 500,
                   "type": "string"
                 },
                 {
@@ -1447,27 +2280,70 @@
               "minLength": 1,
               "title": "Source Id",
               "type": "string"
+            },
+            "table_row": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TableRowLocator"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             }
           },
           "required": [
-            "source_id",
-            "locator"
+            "source_id"
           ],
           "title": "SourceSpan",
+          "type": "object"
+        },
+        "TableRowLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "row": {
+              "minimum": 1,
+              "title": "Row",
+              "type": "integer"
+            },
+            "table": {
+              "minLength": 1,
+              "title": "Table",
+              "type": "string"
+            }
+          },
+          "required": [
+            "table",
+            "row"
+          ],
+          "title": "TableRowLocator",
           "type": "object"
         }
       },
       "additionalProperties": false,
+      "description": "Normalized fact with an ID equal to SHA-256 of its canonical JSON payload.",
       "properties": {
         "category": {
           "minLength": 1,
           "title": "Category",
           "type": "string"
         },
-        "effective_at": {
+        "effective_time": {
           "format": "date-time",
-          "title": "Effective At",
+          "title": "Effective Time",
           "type": "string"
+        },
+        "extraction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExtractionProvenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "fields": {
           "additionalProperties": true,
@@ -1481,31 +2357,39 @@
           "title": "Identifiers",
           "type": "object"
         },
-        "nature": {
-          "$ref": "#/$defs/EvidenceNature"
-        },
         "observation_id": {
-          "minLength": 1,
+          "pattern": "^[0-9a-f]{64}$",
           "title": "Observation Id",
           "type": "string"
         },
-        "provenance": {
-          "items": {
-            "$ref": "#/$defs/SourceSpan"
-          },
-          "minItems": 1,
-          "title": "Provenance",
-          "type": "array"
+        "observed_state": {
+          "minLength": 1,
+          "title": "Observed State",
+          "type": "string"
         },
         "resource_id": {
           "minLength": 1,
           "title": "Resource Id",
           "type": "string"
         },
-        "state": {
-          "minLength": 1,
-          "title": "State",
-          "type": "string"
+        "source_kind": {
+          "$ref": "#/$defs/SourceKind"
+        },
+        "spans": {
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "minItems": 1,
+          "title": "Spans",
+          "type": "array"
+        },
+        "subject_hints": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Subject Hints",
+          "type": "array"
         },
         "system_id": {
           "minLength": 1,
@@ -1518,12 +2402,75 @@
         "system_id",
         "resource_id",
         "category",
-        "state",
-        "effective_at",
-        "nature",
-        "provenance"
+        "observed_state",
+        "effective_time",
+        "source_kind",
+        "spans"
       ],
       "title": "Observation",
+      "type": "object"
+    },
+    "PdfPositionLocator": {
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "minimum": 1,
+          "title": "Page",
+          "type": "integer"
+        },
+        "x0": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "X0"
+        },
+        "x1": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "X1"
+        },
+        "y0": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Y0"
+        },
+        "y1": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Y1"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "title": "PdfPositionLocator",
       "type": "object"
     },
     "PolicyRule": {
@@ -1643,50 +2590,182 @@
       "type": "object"
     },
     "SourceRecord": {
+      "$defs": {
+        "ExtractionProvenance": {
+          "additionalProperties": false,
+          "properties": {
+            "input_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Input Tokens"
+            },
+            "latency_ms": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Latency Ms"
+            },
+            "model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Model"
+            },
+            "model_provider": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Model Provider"
+            },
+            "output_tokens": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Output Tokens"
+            },
+            "parser_name": {
+              "minLength": 1,
+              "title": "Parser Name",
+              "type": "string"
+            },
+            "parser_version": {
+              "minLength": 1,
+              "title": "Parser Version",
+              "type": "string"
+            },
+            "prompt_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Prompt Version"
+            },
+            "request_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Request Id"
+            },
+            "schema_version": {
+              "default": "1.0.0",
+              "title": "Schema Version",
+              "type": "string"
+            },
+            "source_sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Source Sha256",
+              "type": "string"
+            }
+          },
+          "required": [
+            "parser_name",
+            "parser_version",
+            "source_sha256"
+          ],
+          "title": "ExtractionProvenance",
+          "type": "object"
+        },
+        "ParseStatus": {
+          "enum": [
+            "parsed",
+            "partial",
+            "failed"
+          ],
+          "title": "ParseStatus",
+          "type": "string"
+        },
+        "SourceKind": {
+          "enum": [
+            "csv",
+            "json",
+            "log",
+            "text",
+            "pdf",
+            "image",
+            "sql"
+          ],
+          "title": "SourceKind",
+          "type": "string"
+        }
+      },
       "additionalProperties": false,
+      "description": "One evidence manifest entry; ``source_id`` is its participant-visible file_id.",
       "properties": {
         "captured_at": {
           "format": "date-time",
           "title": "Captured At",
           "type": "string"
         },
+        "extraction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExtractionProvenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "kind": {
-          "minLength": 1,
-          "title": "Kind",
-          "type": "string"
+          "$ref": "#/$defs/SourceKind"
         },
         "origin": {
           "minLength": 1,
           "title": "Origin",
           "type": "string"
         },
-        "parser_name": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Parser Name"
+        "parse_status": {
+          "$ref": "#/$defs/ParseStatus"
         },
-        "parser_version": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Parser Version"
-        },
-        "relative_path": {
+        "path": {
           "minLength": 1,
-          "title": "Relative Path",
+          "title": "Path",
           "type": "string"
         },
         "sha256": {
@@ -1704,25 +2783,207 @@
         "source_id",
         "kind",
         "origin",
-        "relative_path",
+        "path",
         "captured_at",
-        "sha256"
+        "sha256",
+        "parse_status"
       ],
       "title": "SourceRecord",
       "type": "object"
     },
     "SourceSpan": {
+      "$defs": {
+        "ImageRegionLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "height": {
+              "exclusiveMinimum": 0,
+              "title": "Height",
+              "type": "integer"
+            },
+            "width": {
+              "exclusiveMinimum": 0,
+              "title": "Width",
+              "type": "integer"
+            },
+            "x": {
+              "minimum": 0,
+              "title": "X",
+              "type": "integer"
+            },
+            "y": {
+              "minimum": 0,
+              "title": "Y",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "width",
+            "height"
+          ],
+          "title": "ImageRegionLocator",
+          "type": "object"
+        },
+        "LineRangeLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "end": {
+              "minimum": 1,
+              "title": "End",
+              "type": "integer"
+            },
+            "start": {
+              "minimum": 1,
+              "title": "Start",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "start",
+            "end"
+          ],
+          "title": "LineRangeLocator",
+          "type": "object"
+        },
+        "PdfPositionLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "page": {
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            },
+            "x0": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "X0"
+            },
+            "x1": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "X1"
+            },
+            "y0": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Y0"
+            },
+            "y1": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Y1"
+            }
+          },
+          "required": [
+            "page"
+          ],
+          "title": "PdfPositionLocator",
+          "type": "object"
+        },
+        "TableRowLocator": {
+          "additionalProperties": false,
+          "properties": {
+            "row": {
+              "minimum": 1,
+              "title": "Row",
+              "type": "integer"
+            },
+            "table": {
+              "minLength": 1,
+              "title": "Table",
+              "type": "string"
+            }
+          },
+          "required": [
+            "table",
+            "row"
+          ],
+          "title": "TableRowLocator",
+          "type": "object"
+        }
+      },
       "additionalProperties": false,
       "properties": {
-        "locator": {
-          "minLength": 1,
-          "title": "Locator",
-          "type": "string"
+        "image_region": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ImageRegionLocator"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "json_path": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Json Path"
+        },
+        "line_range": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineRangeLocator"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pdf_position": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PdfPositionLocator"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "quote": {
           "anyOf": [
             {
-              "maxLength": 1000,
+              "maxLength": 500,
               "type": "string"
             },
             {
@@ -1736,11 +2997,21 @@
           "minLength": 1,
           "title": "Source Id",
           "type": "string"
+        },
+        "table_row": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TableRowLocator"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
-        "source_id",
-        "locator"
+        "source_id"
       ],
       "title": "SourceSpan",
       "type": "object"
@@ -1832,6 +3103,27 @@
         "evidence_id"
       ],
       "title": "Step",
+      "type": "object"
+    },
+    "TableRowLocator": {
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "minimum": 1,
+          "title": "Row",
+          "type": "integer"
+        },
+        "table": {
+          "minLength": 1,
+          "title": "Table",
+          "type": "string"
+        }
+      },
+      "required": [
+        "table",
+        "row"
+      ],
+      "title": "TableRowLocator",
       "type": "object"
     }
   }

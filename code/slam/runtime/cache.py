@@ -18,3 +18,27 @@ def build_cache_key(*, namespace: str, parts: Mapping[str, Any]) -> str:
         separators=(",", ":"),
     ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
+
+
+def build_model_cache_key(
+    *,
+    source_sha256: str,
+    prompt_version: str,
+    schema_version: str,
+    provider: str,
+    model: str,
+    settings: Mapping[str, Any],
+) -> str:
+    """Canonical extraction-cache key owned by runtime and consumed by ingestion."""
+
+    return build_cache_key(
+        namespace="model-extraction-v1",
+        parts={
+            "source_sha256": source_sha256,
+            "prompt_version": prompt_version,
+            "schema_version": schema_version,
+            "provider": provider,
+            "model": model,
+            "settings": settings,
+        },
+    )

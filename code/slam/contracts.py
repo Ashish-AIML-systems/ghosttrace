@@ -75,9 +75,70 @@ class ConfidenceClass(StrEnum):
 
 
 class IssueSeverity(StrEnum):
-    WARNING = "WARNING"
-    ERROR = "ERROR"
-    BLOCKING = "BLOCKING"
+    INFO = "info"
+    WARNING = "warning"
+    ERROR = "error"
+
+
+class ParseStatus(StrEnum):
+    PARSED = "parsed"
+    PARTIAL = "partial"
+    FAILED = "failed"
+
+
+class SourceKind(StrEnum):
+    CSV = "csv"
+    JSON = "json"
+    LOG = "log"
+    TEXT = "text"
+    PDF = "pdf"
+    IMAGE = "image"
+    SQL = "sql"
+
+
+class TableRowLocator(ContractModel):
+    table: str = Field(min_length=1)
+    row: int = Field(ge=1)
+
+
+class LineRangeLocator(ContractModel):
+    start: int = Field(ge=1)
+    end: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def ordered(self) -> Self:
+        if self.end < self.start:
+            raise ValueError("line range end cannot precede start")
+        return self
+
+
+class PdfPositionLocator(ContractModel):
+    page: int = Field(ge=1)
+    x0: float | None = None
+    y0: float | None = None
+    x1: float | None = None
+    y1: float | None = None
+
+
+class ImageRegionLocator(ContractModel):
+    x: int = Field(ge=0)
+    y: int = Field(ge=0)
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+
+
+class ExtractionProvenance(ContractModel):
+    parser_name: str = Field(min_length=1)
+    parser_version: str = Field(min_length=1)
+    source_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    model_provider: str | None = None
+    model: str | None = None
+    request_id: str | None = None
+    prompt_version: str | None = None
+    schema_version: str = CONTRACT_VERSION
+    input_tokens: int | None = Field(default=None, ge=0)
+    output_tokens: int | None = Field(default=None, ge=0)
+    latency_ms: int | None = Field(default=None, ge=0)
 
 
 class AuditRequest(ContractModel):
@@ -98,14 +159,16 @@ class AuditRequest(ContractModel):
 
 
 class SourceRecord(ContractModel):
+    """One evidence manifest entry; ``source_id`` is its participant-visible file_id."""
+
     source_id: str = Field(min_length=1)
-    kind: str = Field(min_length=1)
+    kind: SourceKind
     origin: str = Field(min_length=1)
-    relative_path: str = Field(min_length=1)
+    path: str = Field(min_length=1)
     captured_at: datetime
     sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
-    parser_name: str | None = None
-    parser_version: str | None = None
+    parse_status: ParseStatus
+    extraction: ExtractionProvenance | None = None
 
     @field_validator("captured_at")
     @classmethod
@@ -115,31 +178,56 @@ class SourceRecord(ContractModel):
 
 class SourceSpan(ContractModel):
     source_id: str = Field(min_length=1)
-    locator: str = Field(min_length=1)
-    quote: str | None = Field(default=None, max_length=1000)
+    table_row: TableRowLocator | None = None
+    line_range: LineRangeLocator | None = None
+    json_path: str | None = Field(default=None, min_length=1)
+    pdf_position: PdfPositionLocator | None = None
+    image_region: ImageRegionLocator | None = None
+    quote: str | None = Field(default=None, max_length=500)
+
+    @model_validator(mode="after")
+    def exactly_one_locator(self) -> Self:
+        locators = (
+            self.table_row,
+            self.line_range,
+            self.json_path,
+            self.pdf_position,
+            self.image_region,
+        )
+        if sum(locator is not None for locator in locators) != 1:
+            raise ValueError("SourceSpan requires exactly one locator")
+        return self
 
 
 class Observation(ContractModel):
-    observation_id: str = Field(min_length=1)
+    """Normalized fact with an ID equal to SHA-256 of its canonical JSON payload."""
+
+    observation_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    subject_hints: tuple[str, ...] = ()
     system_id: str = Field(min_length=1)
     resource_id: str = Field(min_length=1)
     category: str = Field(min_length=1)
-    state: str = Field(min_length=1)
-    effective_at: datetime
-    nature: EvidenceNature
+    observed_state: str = Field(min_length=1)
+    effective_time: datetime
+    source_kind: SourceKind
     identifiers: dict[str, str] = Field(default_factory=dict)
     fields: dict[str, Any] = Field(default_factory=dict)
-    provenance: tuple[SourceSpan, ...] = Field(min_length=1)
+    spans: tuple[SourceSpan, ...] = Field(min_length=1)
+    extraction: ExtractionProvenance | None = None
 
-    @field_validator("effective_at")
+    @field_validator("effective_time")
     @classmethod
     def require_timezone(cls, value: datetime) -> datetime:
         return AuditRequest.require_timezone(value)
 
 
-class IdentitySnapshot(ContractModel):
+class CurrentIdentity(ContractModel):
     user_id: str = Field(min_length=1)
-    identifiers: dict[str, str]
+    name: str
+    email: str
+    email_normalized: str
+    phone: str
+    email_hash: str
     updated_at: datetime
     source_id: str
 
@@ -149,8 +237,8 @@ class IdentitySnapshot(ContractModel):
         return AuditRequest.require_timezone(value)
 
 
-class IdentityChange(ContractModel):
-    event_id: str = Field(min_length=1)
+class IdentityChangeEvent(ContractModel):
+    audit_id: str = Field(min_length=1)
     user_id: str = Field(min_length=1)
     field_name: str = Field(min_length=1)
     old_value: str | None = None
@@ -164,7 +252,7 @@ class IdentityChange(ContractModel):
         return AuditRequest.require_timezone(value)
 
 
-class ActivityEvent(ContractModel):
+class Activity(ContractModel):
     activity_id: str = Field(min_length=1)
     activity_type: str = Field(min_length=1)
     occurred_at: datetime
@@ -188,19 +276,19 @@ class PolicyRule(ContractModel):
 
 
 class IngestionIssue(ContractModel):
-    issue_id: str = Field(min_length=1)
     severity: IssueSeverity
     code: str = Field(min_length=1)
     message: str = Field(min_length=1)
     source_id: str | None = None
+    locator: str | None = None
 
 
 class EvidenceBundle(ContractModel):
     contract_version: str = CONTRACT_VERSION
     sources: tuple[SourceRecord, ...] = ()
-    current_identities: tuple[IdentitySnapshot, ...] = ()
-    identity_changes: tuple[IdentityChange, ...] = ()
-    activities: tuple[ActivityEvent, ...] = ()
+    current_identities: tuple[CurrentIdentity, ...] = ()
+    identity_changes: tuple[IdentityChangeEvent, ...] = ()
+    activities: tuple[Activity, ...] = ()
     observations: tuple[Observation, ...] = ()
     policy_rules: tuple[PolicyRule, ...] = ()
     issues: tuple[IngestionIssue, ...] = ()
@@ -211,6 +299,12 @@ class EvidenceBundle(ContractModel):
         if value != CONTRACT_VERSION:
             raise ValueError(f"expected contract version {CONTRACT_VERSION}")
         return value
+
+
+# Transitional import aliases for code written against the first draft of 1.0.0.
+IdentitySnapshot = CurrentIdentity
+IdentityChange = IdentityChangeEvent
+ActivityEvent = Activity
 
 
 class IdentityLink(ContractModel):
@@ -345,10 +439,15 @@ CONTRACT_MODELS: tuple[type[ContractModel], ...] = (
     AuditRequest,
     SourceRecord,
     SourceSpan,
+    TableRowLocator,
+    LineRangeLocator,
+    PdfPositionLocator,
+    ImageRegionLocator,
+    ExtractionProvenance,
     Observation,
-    IdentitySnapshot,
-    IdentityChange,
-    ActivityEvent,
+    CurrentIdentity,
+    IdentityChangeEvent,
+    Activity,
     PolicyRule,
     IngestionIssue,
     EvidenceBundle,

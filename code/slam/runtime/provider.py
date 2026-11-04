@@ -6,6 +6,7 @@ identity, policy, deletion status, ordering, or export readiness.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Generic, Protocol, TypeVar
 
@@ -20,6 +21,21 @@ class ModelUsage:
     output_tokens: int | None = None
     cached_input_tokens: int | None = None
     reasoning_tokens: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ModelImageInput:
+    """In-memory image supplied to a provider; never a provider-accessible path."""
+
+    content: bytes
+    mime_type: str
+    sha256: str
+
+    def __post_init__(self) -> None:
+        if self.mime_type not in {"image/png", "image/jpeg", "image/webp", "image/gif"}:
+            raise ValueError("unsupported image MIME type")
+        if len(self.sha256) != 64 or any(char not in "0123456789abcdef" for char in self.sha256):
+            raise ValueError("sha256 must be 64 lowercase hexadecimal characters")
 
 
 @dataclass(frozen=True, slots=True)
@@ -49,11 +65,31 @@ class ModelRefusalError(ModelProviderError):
     pass
 
 
-class ModelResponseError(ModelProviderError):
+class ModelTruncationError(ModelProviderError):
+    pass
+
+
+class ModelMalformedResponseError(ModelProviderError):
+    pass
+
+
+class ModelResponseError(ModelMalformedResponseError):
+    """Backward-compatible name for malformed structured output."""
+
+
+class ModelTimeoutError(ModelProviderError):
     pass
 
 
 class ModelBudgetError(ModelProviderError):
+    pass
+
+
+class ModelAuthenticationError(ModelProviderError):
+    pass
+
+
+class ModelQuotaError(ModelProviderError):
     pass
 
 
@@ -70,4 +106,5 @@ class ModelProvider(Protocol):
         prompt: str,
         prompt_version: str,
         response_model: type[StructuredT],
+        images: Sequence[ModelImageInput] = (),
     ) -> ModelResult[StructuredT]: ...

@@ -6,7 +6,12 @@ from slam.config import ProviderName, Settings
 from slam.runtime.cache import build_cache_key
 from slam.runtime.fake_provider import FakeModelProvider
 from slam.runtime.metering import UsageLedger
-from slam.runtime.provider import ModelProviderError
+from slam.runtime.provider import (
+    ModelImageInput,
+    ModelMalformedResponseError,
+    ModelProviderError,
+    ModelTimeoutError,
+)
 
 
 class Proposal(BaseModel):
@@ -42,6 +47,34 @@ def test_fake_provider_validates_and_meters() -> None:
 def test_fake_provider_fails_when_empty() -> None:
     with pytest.raises(ModelProviderError):
         FakeModelProvider().generate(prompt="x", prompt_version="v1", response_model=Proposal)
+
+
+def test_fake_provider_accepts_image_and_records_no_network_input() -> None:
+    image = ModelImageInput(content=b"png", mime_type="image/png", sha256="a" * 64)
+    provider = FakeModelProvider([{"value": "screenshot"}])
+    provider.generate(
+        prompt="extract",
+        prompt_version="v1",
+        response_model=Proposal,
+        images=[image],
+    )
+    assert provider.seen_images == [(image,)]
+
+
+def test_fake_provider_maps_malformed_payload_to_typed_error() -> None:
+    with pytest.raises(ModelMalformedResponseError):
+        FakeModelProvider([{"wrong": "field"}]).generate(
+            prompt="x", prompt_version="v1", response_model=Proposal
+        )
+
+
+def test_fake_provider_can_script_retry_then_success() -> None:
+    provider = FakeModelProvider([ModelTimeoutError("first"), {"value": "second"}])
+    with pytest.raises(ModelTimeoutError):
+        provider.generate(prompt="x", prompt_version="v1", response_model=Proposal)
+    assert provider.generate(
+        prompt="x", prompt_version="v1", response_model=Proposal
+    ).value.value == "second"
 
 
 def test_cache_key_is_order_independent_and_namespaced() -> None:

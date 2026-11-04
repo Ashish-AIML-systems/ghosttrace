@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from slam.contracts import EvidenceBundle
+from slam.contracts import AuditRequest, EvidenceBundle
 from slam.runtime.provider import ModelProvider
 
 
@@ -14,3 +14,10 @@ def ingest(
 ) -> EvidenceBundle:
     del dataset_dir, cache_dir, provider
     raise NotImplementedError("evidence ingestion is owned by Ashish")
+
+
+def load_requests(dataset_dir: Path) -> tuple[AuditRequest, ...]:
+    """Load requests separately; EvidenceBundle intentionally excludes requests."""
+
+    del dataset_dir
+    raise NotImplementedError("request loading is owned by Ashish")
