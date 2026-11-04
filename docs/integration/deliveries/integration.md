@@ -18,6 +18,7 @@ last_updated: 2026-11-05
 Branch `integration/reconstruction`: Manya's reconstruction merged intact (`152b0a2`, her `log.txt` left out), Lalith's evaluation scorer/validator/data-quality (`e3d16b4`) and Satvika's answer validator (`d70892e`) merged unchanged, plus:
 - fixes to Manya's code found by running it on the real corpus: intent recall 20/32 -> 32/32 samples (0/518 unclear, 10 non-deletion = exactly the 10 CLASSIFY_REQUEST claims); activity edges no longer invert mitigations (116 flow + 58 restore edges) and 303 plain records no longer read as flows; info-level ingestion notes no longer block certification; identity as of `audit_at`; names no longer attach evidence; injection guard accepts plurals.
 - `plan_case(context, bundle)` (policy + ordered steps), `export_output_csv`, `slam.pipeline.run/evaluate_samples`, `code/main.py --dataset dataset [--evaluate]`.
+- **Account/resource linking (dynamic, no dataset-specific constants)**: `ownership.py` (L1 explicit owner index + L2 closure), `linking.py` (L3: timing signatures learned per (activity type, target system) from labelled pairs and enabled only after held-out validation with zero wrong), `absence.py` (ABSENT proven by the latest complete snapshot lacking the record); `reconstruct_with_links(request, bundle, link_model)` added, frozen `reconstruct` unchanged; ingestion maps `uploaded_by`. Plan: `docs/integration/ACCOUNT_LINKING_PLAN.md`.
 - Contract 1.1.0 adoption (Lalith `fa6076a`): reconstruction fills `policy_rules` and `evidence_captured_at`; `plan(context)` works from the context alone.
 - `scripts/smoke_test.py` and `docs/integration/RCA_ACCURACY.md` (root causes of the step-level gap).
 - Tests: `tests/reconstruction/test_integration_fixes.py`, `tests/planning/test_engine.py`, `tests/integration/test_pipeline_seam.py`; reports in `evaluation/`.
@@ -26,46 +27,52 @@ Branch `integration/reconstruction`: Manya's reconstruction merged intact (`152b
 
 Each file below is another owner's or unowned; the owner must confirm.
 
+- `README.md` - Lalith: run instructions; Lalith to confirm
 - `code/evaluation/__init__.py` - Lalith: merged from origin/lalith unchanged
 - `code/main.py` - Lalith: wired the dataset run and --evaluate; Lalith to confirm
+- `code/slam/contracts.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
 - `code/slam/evaluation/__init__.py` - Lalith: merged from origin/lalith unchanged
 - `code/slam/evaluation/data_quality.py` - Lalith: merged from origin/lalith unchanged
 - `code/slam/evaluation/scorer.py` - Lalith: merged from origin/lalith unchanged
 - `code/slam/evaluation/validator.py` - Lalith: merged from origin/lalith unchanged
-- `code/slam/pipeline.py` - unowned new module: end-to-end run; Lalith to confirm placement
+- `code/slam/ingestion/vocab.py` - Ashish: maps `uploaded_by` as an owner identifier (attachments become attributable); Ashish to confirm
+- `code/slam/pipeline.py` - unowned new module: end-to-end run and link-model fitting; Lalith to confirm placement
+- `code/slam/planning/api.py` - Satvika: planner, exporter and evaluation cases written because plan() was still a stub; Satvika to review
 - `code/slam/planning/engine.py` - Satvika: planner, exporter and evaluation cases written because plan() was still a stub; Satvika to review
 - `code/slam/planning/export.py` - Satvika: planner, exporter and evaluation cases written because plan() was still a stub; Satvika to review
 - `code/slam/planning/validation.py` - Satvika: merged from origin/satvika unchanged
-- `code/slam/reconstruction/api.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `code/slam/reconstruction/graph.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `code/slam/reconstruction/identity.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `code/slam/reconstruction/request_intent.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `code/slam/reconstruction/timeline.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `code/slam/reconstruction/__init__.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/absence.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/api.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/graph.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/identity.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/linking.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/ownership.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/request_intent.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/timeline.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/runtime/orchestrator.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
+- `contracts/CONTRACT_VERSION` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
+- `contracts/SCHEMA_SHA256` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
+- `contracts/slam-contract-v1.schema.json` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
 - `evaluation/evaluation_report.md` - unowned: required submission reports generated by `main.py --evaluate`
 - `evaluation/usage_report.md` - unowned: required submission reports generated by `main.py --evaluate`
+- `scripts/smoke_test.py` - unowned new tool: seeded one-case smoke test
+- `tests/contracts/test_all_model_roundtrips.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
+- `tests/contracts/test_owned_boundaries.py` - Lalith: Manya's edit carried in by the merge; Lalith to confirm
 - `tests/evaluation/test_data_quality.py` - Lalith: merged from origin/lalith unchanged
 - `tests/evaluation/test_scorer.py` - Lalith: merged from origin/lalith unchanged
 - `tests/evaluation/test_validator.py` - Lalith: merged from origin/lalith unchanged
-- `tests/fixtures/reconstruction/README.md` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `tests/fixtures/reconstruction/README.md` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
 - `tests/planning/test_engine.py` - Satvika: planner, exporter and evaluation cases written because plan() was still a stub; Satvika to review
 - `tests/planning/test_validation.py` - Satvika: merged from origin/satvika unchanged
-- `tests/reconstruction/conftest.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `tests/reconstruction/test_api.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `tests/reconstruction/test_graph.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `tests/reconstruction/test_identity.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `tests/reconstruction/test_integration_fixes.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `tests/reconstruction/test_request_intent.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `tests/reconstruction/test_timeline.py` - Manya: merged from origin/manya, then fixed (see Delivers)
-- `tests/contracts/test_owned_boundaries.py` - Lalith: Manya's edit (reconstruction-stub assertion replaced by an empty-evidence assertion), carried in by the merge; Lalith to confirm.
-- `README.md` - Lalith: replaced the stale "modules raise NotImplementedError" paragraph and added run instructions; Lalith to confirm.
-- `code/slam/planning/api.py` - Satvika: `plan(context)` now delegates to the engine (contract 1.1.0 makes the context sufficient); Satvika to review.
-- `scripts/smoke_test.py` - unowned new tool: seeded one-case smoke test with invariants and a diff against the key.
-- `code/slam/contracts.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
-- `code/slam/runtime/orchestrator.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
-- `contracts/CONTRACT_VERSION` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
-- `contracts/SCHEMA_SHA256` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
-- `contracts/slam-contract-v1.schema.json` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
-- `tests/contracts/test_all_model_roundtrips.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
+- `tests/reconstruction/conftest.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `tests/reconstruction/test_api.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `tests/reconstruction/test_graph.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `tests/reconstruction/test_identity.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `tests/reconstruction/test_integration_fixes.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `tests/reconstruction/test_linking.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `tests/reconstruction/test_request_intent.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `tests/reconstruction/test_timeline.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
 
 ## Requires from others
 
@@ -88,7 +95,7 @@ None. The checker is standard-library only.
 
 ## Verification
 
-Docker (`docker compose run --rm -T slam-dev ...`), 2026-11-05: `ruff check code tests scripts` clean; `mypy code/slam code/main.py` no issues in 51 files; `pytest -q` 520 passed, 18 skipped (git-dependent, no git in image). `python code/main.py --dataset dataset --evaluate`: 518 rows, 0 failures, accepted by `validate_output_csv`, byte-identical on rerun; statuses INCOMPLETE 354 / COMPLETE 154 / NOT_APPLICABLE 10. Public samples: status accuracy 0.906 (29/32), false COMPLETE 0, step F1 0.441 (precision 0.479, recall 0.409), exact cases 0.125, sequence 0.125 (spec step order applied).
+Docker (`docker compose run --rm -T slam-dev ...`), 2026-11-05: `ruff check code tests scripts` clean; `mypy code/slam code/main.py` no issues in 51 files; `pytest -q` 520 passed, 18 skipped (git-dependent, no git in image). `python code/main.py --dataset dataset --evaluate`: 518 rows, 0 failures, accepted by `validate_output_csv`, byte-identical on rerun; statuses INCOMPLETE 354 / COMPLETE 154 / NOT_APPLICABLE 10. Public samples: status accuracy 0.906 (29/32), false COMPLETE 0, step F1 0.456 (precision 0.491, recall 0.425), exact cases 0.125. 534 tests pass (Docker), mypy strict clean. Link model on the real data enabled 11 validated groups (e.g. DELETE_RECORD@account_service 44..76 min, 59% held-out resolved, 0 wrong); ANONYMIZE_RECORD@analytics_platform was rejected by the gate (1 wrong in 62 held-out).
 
 ## Known limits
 

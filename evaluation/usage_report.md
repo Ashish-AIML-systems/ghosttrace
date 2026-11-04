@@ -1,6 +1,6 @@
 # Usage report
 
-Final full-dataset run that produced `output.csv` (518 cases, 30.3 s).
+Final full-dataset run that produced `output.csv` (518 cases, 28.3 s).
 
 - Model provider: `fake`, model `fake-structured-v1`
 - Model calls: 0 (deterministic pipeline; OCR resolved every image)

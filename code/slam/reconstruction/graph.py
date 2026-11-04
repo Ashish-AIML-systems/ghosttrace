@@ -45,9 +45,32 @@ _RESTORE_TOKENS = frozenset({"RESTORE"})
 # Any of these makes an activity a probe or a mitigation, never a source of recreation.
 _NON_CREATING_TOKENS = frozenset(
     {
-        "CHECK", "DISABLE", "BLOCK", "STOP", "PAUSE", "REVOKE", "VERIFY", "TEST", "VALIDATE",
-        "INSPECT", "AUDIT", "READ", "LIST", "GET", "DENY", "CANCEL", "DELETE", "REMOVE",
-        "REDACT", "ANONYMIZE", "RETAIN", "CLASSIFY", "LINK", "UPDATE", "REFRESH", "SEND",
+        "CHECK",
+        "DISABLE",
+        "BLOCK",
+        "STOP",
+        "PAUSE",
+        "REVOKE",
+        "VERIFY",
+        "TEST",
+        "VALIDATE",
+        "INSPECT",
+        "AUDIT",
+        "READ",
+        "LIST",
+        "GET",
+        "DENY",
+        "CANCEL",
+        "DELETE",
+        "REMOVE",
+        "REDACT",
+        "ANONYMIZE",
+        "RETAIN",
+        "CLASSIFY",
+        "LINK",
+        "UPDATE",
+        "REFRESH",
+        "SEND",
         "NOTIFY",
     }
 )
@@ -117,14 +140,20 @@ def _observation_edge(observation: Observation, relationship: str) -> GraphEdge:
         data,
         ("source_resource_id", "upstream_resource_id", "from_resource_id"),
     )
-    target_system = _first(
-        data,
-        ("target_system", "destination_system", "downstream_system", "to_system"),
-    ) or observation.system_id
-    target_resource = _first(
-        data,
-        ("target_resource_id", "downstream_resource_id", "to_resource_id"),
-    ) or observation.resource_id
+    target_system = (
+        _first(
+            data,
+            ("target_system", "destination_system", "downstream_system", "to_system"),
+        )
+        or observation.system_id
+    )
+    target_resource = (
+        _first(
+            data,
+            ("target_resource_id", "downstream_resource_id", "to_resource_id"),
+        )
+        or observation.resource_id
+    )
     source = _node(
         source_system or observation.system_id,
         source_resource or observation.resource_id,
@@ -256,10 +285,7 @@ def build_dependency_graph(
     for component in sorted(cyclic):
         conflicts.append(f"graph:active cycle:{'|'.join(component)}")
     edges = graph_edges(active_flows, restore_risks)
-    if any(
-        edge.source == "system:unknown" or edge.target == "system:unknown"
-        for edge in edges
-    ):
+    if any(edge.source == "system:unknown" or edge.target == "system:unknown" for edge in edges):
         coverage.append("graph:active edge has an unknown endpoint")
 
     return GraphResult(

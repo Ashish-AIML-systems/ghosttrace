@@ -118,9 +118,7 @@ class OpenAIModelProvider:
         if parsed is None:
             raise ModelResponseError("API response did not contain validated structured output")
         value = (
-            parsed
-            if isinstance(parsed, response_model)
-            else response_model.model_validate(parsed)
+            parsed if isinstance(parsed, response_model) else response_model.model_validate(parsed)
         )
         usage: Any = response.usage
         input_details = getattr(usage, "input_tokens_details", None)

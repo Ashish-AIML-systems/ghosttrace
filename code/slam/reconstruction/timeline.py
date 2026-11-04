@@ -55,22 +55,14 @@ def _source_capture_times(bundle: EvidenceBundle) -> dict[str, datetime]:
 
 def _captured_at(observation: Observation, source_times: dict[str, datetime]) -> datetime:
     times = [
-        source_times[span.source_id]
-        for span in observation.spans
-        if span.source_id in source_times
+        source_times[span.source_id] for span in observation.spans if span.source_id in source_times
     ]
     return max(times, default=observation.effective_time)
 
 
 def _evidence_ids(observations: list[Observation]) -> tuple[str, ...]:
     return tuple(
-        sorted(
-            {
-                span.source_id
-                for observation in observations
-                for span in observation.spans
-            }
-        )
+        sorted({span.source_id for observation in observations for span in observation.spans})
     )
 
 
@@ -102,9 +94,7 @@ def _build_state(
     candidates = direct or observations
     latest_time = max(observation.effective_time for observation in candidates)
     latest = [
-        observation
-        for observation in candidates
-        if observation.effective_time == latest_time
+        observation for observation in candidates if observation.effective_time == latest_time
     ]
     latest_capture = max(_captured_at(observation, source_times) for observation in latest)
     terminal = [
@@ -183,14 +173,21 @@ def reconstruct_timeline(
     bundle: EvidenceBundle,
     identifiers: frozenset[str],
     subject_id: str | None,
+    owned_resources: frozenset[str] = frozenset(),
 ) -> TimelineResult:
-    """Filter subject observations by cutoff and fold them into resource state."""
+    """Filter subject observations by cutoff and fold them into resource state.
+
+    ``owned_resources`` is resource-id closure (tier L2): once a resource is known to belong to
+    the subject, every observation of it belongs too, even one that carries no identifier (a
+    later 404 lookup, an anonymized readback).
+    """
 
     source_times = _source_capture_times(bundle)
     matched_by_id = {
         observation.observation_id: observation
         for observation in bundle.observations
         if observation_matches(observation, identifiers, subject_id)
+        or (observation.resource_id in owned_resources and observation.category != "SNAPSHOT_SCOPE")
     }
     matched = list(matched_by_id.values())
     eligible: list[Observation] = []

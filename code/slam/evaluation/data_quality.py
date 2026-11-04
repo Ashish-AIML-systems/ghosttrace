@@ -70,21 +70,25 @@ def analyze_evidence_quality(
         sources_by_id[source.source_id].append(source)
 
     expected_ids = (
-        set(expected_source_ids)
-        if expected_source_ids is not None
-        else set(sources_by_id)
+        set(expected_source_ids) if expected_source_ids is not None else set(sources_by_id)
     )
     accounted_ids = set(sources_by_id) & expected_ids
     parsed = sum(
-        1 for source_id in accounted_ids for source in sources_by_id[source_id]
+        1
+        for source_id in accounted_ids
+        for source in sources_by_id[source_id]
         if source.parse_status.value == "parsed"
     )
     partial = sum(
-        1 for source_id in accounted_ids for source in sources_by_id[source_id]
+        1
+        for source_id in accounted_ids
+        for source in sources_by_id[source_id]
         if source.parse_status.value == "partial"
     )
     failed = sum(
-        1 for source_id in accounted_ids for source in sources_by_id[source_id]
+        1
+        for source_id in accounted_ids
+        for source in sources_by_id[source_id]
         if source.parse_status.value == "failed"
     )
     expected_count = len(expected_ids)
@@ -118,9 +122,7 @@ def analyze_evidence_quality(
     content_groups: dict[str, list[str]] = defaultdict(list)
     for source in bundle.sources:
         content_groups[source.sha256].append(source.source_id)
-    duplicate_groups = [
-        tuple(sorted(ids)) for ids in content_groups.values() if len(set(ids)) > 1
-    ]
+    duplicate_groups = [tuple(sorted(ids)) for ids in content_groups.values() if len(set(ids)) > 1]
     for ids in duplicate_groups:
         issues.append(
             DataQualityIssue(
@@ -186,9 +188,7 @@ def analyze_evidence_quality(
             if normalized:
                 identifier_owners[(change.field_name.lower(), normalized)].add(change.user_id)
     collisions = [
-        (identifier, owners)
-        for identifier, owners in identifier_owners.items()
-        if len(owners) > 1
+        (identifier, owners) for identifier, owners in identifier_owners.items() if len(owners) > 1
     ]
     for (kind, _value), owners in sorted(collisions):
         issues.append(
@@ -204,8 +204,7 @@ def analyze_evidence_quality(
     linked_count = sum(
         1
         for observation in bundle.observations
-        if observation.spans
-        and all(span.source_id in sources_by_id for span in observation.spans)
+        if observation.spans and all(span.source_id in sources_by_id for span in observation.spans)
     )
     provenance_fraction = linked_count / observation_count if observation_count else 1.0
     if linked_count < observation_count:

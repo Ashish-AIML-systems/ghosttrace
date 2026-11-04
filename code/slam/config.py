@@ -27,9 +27,7 @@ class Settings(BaseSettings):
     api_timeout_seconds: int = Field(
         default=60, ge=1, le=600, validation_alias="SLAM_API_TIMEOUT_SECONDS"
     )
-    api_max_retries: int = Field(
-        default=2, ge=0, le=2, validation_alias="SLAM_API_MAX_RETRIES"
-    )
+    api_max_retries: int = Field(default=2, ge=0, le=2, validation_alias="SLAM_API_MAX_RETRIES")
     api_max_concurrency: int = Field(
         default=4, ge=1, le=32, validation_alias="SLAM_API_MAX_CONCURRENCY"
     )

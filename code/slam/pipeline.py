@@ -22,7 +22,7 @@ from slam.ingestion.api import ingest, load_requests
 from slam.planning.engine import plan_case
 from slam.planning.export import export_output_csv
 from slam.planning.validation import validate_answer
-from slam.reconstruction import reconstruct
+from slam.reconstruction import linking, reconstruct_with_links
 from slam.runtime.provider import ModelProvider
 
 
@@ -32,6 +32,7 @@ class RunSummary:
     statuses: Counter[str] = field(default_factory=Counter)
     failures: dict[str, str] = field(default_factory=dict)
     uncertain_cases: int = 0
+    link_groups: list[str] = field(default_factory=list)
     seconds: float = 0.0
     output_path: Path | None = None
 
@@ -76,12 +77,13 @@ def answer_cases(
     bundle: EvidenceBundle,
     *,
     provider: ModelProvider | None = None,
+    link_model: linking.LinkModel | None = None,
 ) -> tuple[list[CaseAnswer], dict[str, str]]:
     answers: list[CaseAnswer] = []
     failures: dict[str, str] = {}
     for request in requests:
         try:
-            context = reconstruct(request, bundle, provider=provider)
+            context = reconstruct_with_links(request, bundle, link_model, provider=provider)
             answer = plan_case(context, bundle)
             if answer.deletion_status is not None:
                 answer = validate_answer(
@@ -100,14 +102,21 @@ def run(
     requests_file: Path | None = None,
     provider: ModelProvider | None = None,
     cache_dir: Path | None = None,
+    cohort: tuple[AuditRequest, ...] = (),
 ) -> RunSummary:
     started = time.monotonic()
-    requests = (
-        load_request_file(requests_file) if requests_file else load_requests(dataset_dir)
-    )
+    requests = load_request_file(requests_file) if requests_file else load_requests(dataset_dir)
     bundle = ingest(dataset_dir, cache_dir=cache_dir, provider=provider)
-    answers, failures = answer_cases(requests, bundle, provider=provider)
+    # Timing signatures are learned from every known request (the cohort), not only this run's.
+    everyone = tuple({r.case_id: r for r in (*requests, *cohort)}.values())
+    model = linking.fit(bundle, everyone)
+    answers, failures = answer_cases(requests, bundle, provider=provider, link_model=model)
     summary = RunSummary(cases=len(requests), failures=failures)
+    summary.link_groups = [
+        f"{g.key[0]}@{g.key[1]} window {g.window[0]:.0f}..{g.window[1]:.0f} min, "
+        f"{g.pairs} pairs, {g.resolved:.0%} resolved"
+        for g in model.groups
+    ]
     for answer in answers:
         if answer.deletion_status is None:
             summary.failures[answer.case_id] = "; ".join(answer.blocking_issues)
@@ -143,6 +152,7 @@ def evaluate_samples(
             target,
             requests_file=dataset_dir / "sample_deletion_requests.csv",
             provider=provider,
+            cohort=load_requests(dataset_dir),
         )
         if not summary.ok:
             raise RuntimeError(f"sample run failed: {summary.failures}")
