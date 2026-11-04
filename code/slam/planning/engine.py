@@ -290,6 +290,15 @@ def plan_case(context: CaseContext, bundle: EvidenceBundle | None = None) -> Cas
         )
         if item is not None:
             items.append(item)
+    # A state with no citable evidence (a retained record known only from a later-exported file)
+    # may only become a future presence check: it can never be a finding or a violation.
+    items = [
+        item
+        for item in items
+        if item.state.supporting_evidence_ids
+        or (item.remediation is None and item.verification is Operation.VERIFY_RECORD_PRESENT)
+    ]
+    cited = [item for item in items if item.state.supporting_evidence_ids]
     violations = [item for item in items if item.remediation is not None]
     reasons = blocking_reasons(context)
 
@@ -305,9 +314,9 @@ def plan_case(context: CaseContext, bundle: EvidenceBundle | None = None) -> Cas
         ]
 
     steps: list[Step]
-    if not violations and not reasons and items:
+    if not violations and not reasons and cited:
         steps = ordered(
-            [(item.verification, item.state, _cite(item.state, captured)) for item in items]
+            [(item.verification, item.state, _cite(item.state, captured)) for item in cited]
         )
         status = DeletionStatus.COMPLETE
     else:

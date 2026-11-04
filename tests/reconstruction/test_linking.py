@@ -304,3 +304,18 @@ def test_absence_is_proven_by_the_latest_complete_snapshot_lacking_the_resource(
     assert [s.state for s in context.resource_states if s.resource_id == "ledger_100"] == [
         "PRESENT"
     ]
+
+
+def test_a_learned_status_result_agreement_breaks_timing_ties() -> None:
+    """Every labelled COMPLETE case here pairs with SUCCESS, so a FAILED rival is not theirs."""
+
+    rival = purge("rival", "ledger_rival", request(100).reported_at - timedelta(minutes=53))
+    failed = rival.model_copy(update={"reported_result": "FAILED"})
+    bundle, requests = world(extra_acts=(failed,))
+    model = linking.fit(bundle, tuple(requests))
+    assert dict(model.groups[0].agree) == {"COMPLETE": "SUCCESS"}  # learned, not configured
+    assert [a.resource_id for a in model.for_case("c100").attributed] == ["ledger_100"]
+
+    same = rival  # a rival with the *same* result still cannot be told apart
+    bundle, requests = world(extra_acts=(same,))
+    assert linking.fit(bundle, tuple(requests)).for_case("c100").attributed == ()

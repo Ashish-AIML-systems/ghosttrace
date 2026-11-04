@@ -16,7 +16,7 @@ import re
 from collections import Counter, defaultdict
 from datetime import datetime
 
-from slam.contracts import AuditRequest, EvidenceBundle, ResourceState
+from slam.contracts import AuditRequest, EvidenceBundle, Observation, ResourceState
 
 
 def _prefix(resource_id: str) -> str:
@@ -93,3 +93,38 @@ def infer_absent_states(
             )
         )
     return tuple(found)
+
+
+def retained_before_cutoff(
+    request: AuditRequest,
+    late: tuple[Observation, ...],
+    retained_categories: frozenset[str],
+    existing: tuple[ResourceState, ...],
+) -> tuple[ResourceState, ...]:
+    """Retained records seen before the cutoff in evidence that was *exported* after it.
+
+    A retention obligation does not depend on when a file was exported: if an event dated at
+    or before ``audit_at`` shows a record in a category the policy retains, that record must still
+    exist after any remediation. These states carry **no citation** (the file postdates the
+    cutoff and may not be cited), so a planner may use them only as future verification steps,
+    never as findings and never to certify a case ``COMPLETE``.
+    """
+
+    have = {(state.system_id, state.resource_id) for state in existing}
+    found: dict[tuple[str, str], ResourceState] = {}
+    for observation in late:
+        key = (observation.system_id, observation.resource_id)
+        if (
+            observation.category in retained_categories
+            and observation.observed_state.upper() == "PRESENT"
+            and observation.effective_time <= request.audit_at
+            and key not in have
+        ):
+            found[key] = ResourceState(
+                system_id=observation.system_id,
+                resource_id=observation.resource_id,
+                category=observation.category,
+                state="PRESENT",
+                at=request.audit_at,
+            )
+    return tuple(found[key] for key in sorted(found))

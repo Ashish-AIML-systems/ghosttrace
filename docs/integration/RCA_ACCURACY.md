@@ -1,4 +1,4 @@
-# RCA: why step-level accuracy is low (public samples: status 0.906, step F1 0.441 after the ordering fix; was 0.335)
+# RCA: output quality vs HackerRank's 32 published answers (status 0.906, step F1 0.701 after the second pass)
 
 Method: ran the real pipeline on the 32 public samples, diffed every case against
 `sample_output.csv`, traced each missing step back to the files, and did not tune anything to the
@@ -35,3 +35,39 @@ Every uncertain or unattributable case degrades to INCOMPLETE, never to COMPLETE
 Either (a) a grounded owner link for account ids (e.g. an additional file the organizers can confirm),
 or (b) accept that those verification steps cannot be produced, and score status only. A heuristic
 based on `account_N` numbering or time proximity would be fitted to the samples and is not proposed.
+
+
+## Second pass (all measured against HackerRank's own `sample_output.csv`, on a fresh official clone)
+
+| Metric | Before | After |
+|---|---|---|
+| Step F1 | 0.456 | **0.701** |
+| Step precision / recall | 0.491 / 0.425 | **0.744 / 0.663** |
+| Exact cases | 4/32 | **11/32** |
+| HackerRank steps reproduced | 147/193 | **161/193 (83%)** |
+| Status accuracy / false COMPLETE | 0.906 / 0 | 0.906 / 0 |
+
+### Defects found and fixed in this pass
+
+| # | Root cause | Evidence | Fix |
+|---|---|---|---|
+| D1 | **Ingestion parser bug.** A handover note writes table rows as list items (`- 2026-10-01T... | account_3677 | USER_PROFILE | NOT_FOUND | email`). The row pattern required a leading timestamp, so those rows fell to the prose path, became anchor facts, and were always `PRESENT`; the printed `NOT_FOUND` and `SUPPORT_ATTACHMENT` columns were ignored. | 3 false `REPORT_REMAINING_RECORD` + `DELETE_RECORD` findings (cases 11, 13, 14) | accept an optional list bullet; regression test |
+| D2 | **Retained records seen before the cutoff in a file exported after it** were dropped. | 7 missing `VERIFY_RECORD_PRESENT` on `audit_record_*`; e.g. event 08:52 vs cutoff 09:00, file exported two days later | such a record becomes an **uncited, verification-only** state: never a finding, never a violation, never inside a COMPLETE answer |
+| D3 | Timing alone left 2-6 candidate deletions per window. | batches of cases share report times | learn the `reported_status` <-> activity `reported_result` agreement from labelled pairs (COMPLETE/SUCCESS 89 of 90, NOT_STARTED/FAILED 25 of 25, PARTIALLY_COMPLETE/PARTIAL 50 of 50) and use it as a validated filter: correct unique attributions 97 -> 127 of 165, still **0 wrong** |
+
+### What was tested and rejected (so nobody re-tries it)
+
+- **Ordering as a tiebreaker inside a batch**: request time, case number and activity-ID order are at chance (48.1%, 39.6%); `reported_at` order is consistent but almost always tied. The 7 remaining ambiguous cases have **no further discriminating signal in the data**.
+- **Numeric id correlation** (`account_N` = `user_N`): 4 of 55 explicit pairs; it only describes the 8 hand-made teaching cases.
+- **A DELETE-vs-REDACT rule for support records**: HackerRank redacts three records that show no content and deletes a PDF record and a replica copy; two cases cannot justify a rule.
+
+### Still open (honest)
+
+| Gap | Cases | Why |
+|---|---|---|
+| Account absence for the hand-made teaching cases (`account_001`..`010`) | 7 | different timing regime (about 0 min) with too few labelled pairs to validate; they will not appear in the 518 |
+| Account absence where several candidates remain | 7 | inherent ambiguity (see above) |
+| Support record DELETE vs REDACT, replica aliasing | 2 | no safe general rule |
+| `analytics_9914` finding is DELETE in the key, ANONYMIZE ours | 1 | unexplained |
+
+Caution on the metric: the 32 public samples are a *proxy*. Some of their timing patterns (e.g. analytics anonymization offsets) differ from the 518, so the samples can under-state the linker.

@@ -15,6 +15,12 @@ last_updated: 2026-11-05
 
 ## Delivers
 
+**This PR (on top of PR #5, already in `dev`):** quality pass measured against HackerRank's own 32 published answers.
+- Ingestion: bulleted table rows are parsed as rows (explicit `NOT_FOUND`/`SUPPORT_ATTACHMENT` columns were ignored); `uploaded_by` is an owner identifier.
+- Reconstruction: dynamic account/resource-to-person linking (`ownership.py`, `linking.py`, `absence.py`; windows and a status/result agreement are learned and held-out validated, nothing dataset-specific); retained records seen before the cutoff in later-exported files become uncited verification-only states; `reconstruct_with_links` added, frozen `reconstruct` unchanged.
+- Planner: steps ordered exactly as the problem statement specifies.
+- `scripts/build_submission.py` (code.zip + self-check), `scripts/smoke_test.py`, a diagram-conformance test, `docs/integration/RCA_ACCURACY.md`.
+
 Branch `integration/reconstruction`: Manya's reconstruction merged intact (`152b0a2`, her `log.txt` left out), Lalith's evaluation scorer/validator/data-quality (`e3d16b4`) and Satvika's answer validator (`d70892e`) merged unchanged, plus:
 - fixes to Manya's code found by running it on the real corpus: intent recall 20/32 -> 32/32 samples (0/518 unclear, 10 non-deletion = exactly the 10 CLASSIFY_REQUEST claims); activity edges no longer invert mitigations (116 flow + 58 restore edges) and 303 plain records no longer read as flows; info-level ingestion notes no longer block certification; identity as of `audit_at`; names no longer attach evidence; injection guard accepts plurals.
 - `plan_case(context, bundle)` (policy + ordered steps), `export_output_csv`, `slam.pipeline.run/evaluate_samples`, `code/main.py --dataset dataset [--evaluate]`.
@@ -27,52 +33,25 @@ Branch `integration/reconstruction`: Manya's reconstruction merged intact (`152b
 
 Each file below is another owner's or unowned; the owner must confirm.
 
-- `README.md` - Lalith: run instructions; Lalith to confirm
-- `code/evaluation/__init__.py` - Lalith: merged from origin/lalith unchanged
-- `code/main.py` - Lalith: wired the dataset run and --evaluate; Lalith to confirm
-- `code/slam/contracts.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
-- `code/slam/evaluation/__init__.py` - Lalith: merged from origin/lalith unchanged
-- `code/slam/evaluation/data_quality.py` - Lalith: merged from origin/lalith unchanged
-- `code/slam/evaluation/scorer.py` - Lalith: merged from origin/lalith unchanged
-- `code/slam/evaluation/validator.py` - Lalith: merged from origin/lalith unchanged
-- `code/slam/ingestion/vocab.py` - Ashish: maps `uploaded_by` as an owner identifier (attachments become attributable); Ashish to confirm
+- `code/slam/ingestion/parsers/text_parser.py` - Ashish: parser fix for bulleted table rows (explicit state/category columns were ignored) and `uploaded_by` owner identifier; Ashish to confirm
+- `code/slam/ingestion/vocab.py` - Ashish: parser fix for bulleted table rows (explicit state/category columns were ignored) and `uploaded_by` owner identifier; Ashish to confirm
 - `code/slam/pipeline.py` - unowned new module: end-to-end run and link-model fitting; Lalith to confirm placement
-- `code/slam/planning/api.py` - Satvika: planner, exporter and evaluation cases written because plan() was still a stub; Satvika to review
 - `code/slam/planning/engine.py` - Satvika: planner, exporter and evaluation cases written because plan() was still a stub; Satvika to review
-- `code/slam/planning/export.py` - Satvika: planner, exporter and evaluation cases written because plan() was still a stub; Satvika to review
-- `code/slam/planning/validation.py` - Satvika: merged from origin/satvika unchanged
-- `code/slam/reconstruction/__init__.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/reconstruction/absence.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/reconstruction/api.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/reconstruction/graph.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/reconstruction/identity.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/reconstruction/linking.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/reconstruction/ownership.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/reconstruction/request_intent.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/reconstruction/timeline.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `code/slam/runtime/orchestrator.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
-- `contracts/CONTRACT_VERSION` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
-- `contracts/SCHEMA_SHA256` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
-- `contracts/slam-contract-v1.schema.json` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
-- `evaluation/evaluation_report.md` - unowned: required submission reports generated by `main.py --evaluate`
-- `evaluation/usage_report.md` - unowned: required submission reports generated by `main.py --evaluate`
-- `scripts/smoke_test.py` - unowned new tool: seeded one-case smoke test
-- `tests/contracts/test_all_model_roundtrips.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged
-- `tests/contracts/test_owned_boundaries.py` - Lalith: Manya's edit carried in by the merge; Lalith to confirm
-- `tests/evaluation/test_data_quality.py` - Lalith: merged from origin/lalith unchanged
-- `tests/evaluation/test_scorer.py` - Lalith: merged from origin/lalith unchanged
-- `tests/evaluation/test_validator.py` - Lalith: merged from origin/lalith unchanged
-- `tests/fixtures/reconstruction/README.md` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `code/slam/reconstruction/__init__.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers); Manya to confirm
+- `code/slam/reconstruction/absence.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers); Manya to confirm
+- `code/slam/reconstruction/api.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers); Manya to confirm
+- `code/slam/reconstruction/graph.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers); Manya to confirm
+- `code/slam/reconstruction/linking.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers); Manya to confirm
+- `code/slam/reconstruction/ownership.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers); Manya to confirm
+- `code/slam/reconstruction/timeline.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers); Manya to confirm
+- `evaluation/evaluation_report.md` - unowned: required submission reports (`main.py --evaluate`) and the side-by-side
+- `evaluation/side_by_side_samples.md` - unowned: required submission reports (`main.py --evaluate`) and the side-by-side
+- `evaluation/usage_report.md` - unowned: required submission reports (`main.py --evaluate`) and the side-by-side
+- `scripts/build_submission.py` - unowned new tool (smoke test / code.zip builder with self-check)
+- `scripts/smoke_test.py` - unowned new tool (smoke test / code.zip builder with self-check)
+- `tests/ingestion/test_ingestion_text_and_doctext.py` - Ashish: parser fix for bulleted table rows (explicit state/category columns were ignored) and `uploaded_by` owner identifier; Ashish to confirm
 - `tests/planning/test_engine.py` - Satvika: planner, exporter and evaluation cases written because plan() was still a stub; Satvika to review
-- `tests/planning/test_validation.py` - Satvika: merged from origin/satvika unchanged
-- `tests/reconstruction/conftest.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `tests/reconstruction/test_api.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `tests/reconstruction/test_graph.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `tests/reconstruction/test_identity.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `tests/reconstruction/test_integration_fixes.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `tests/reconstruction/test_linking.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `tests/reconstruction/test_request_intent.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
-- `tests/reconstruction/test_timeline.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers)
+- `tests/reconstruction/test_linking.py` - Manya: merged from origin/manya, then fixed and extended (see Delivers); Manya to confirm
 
 ## Requires from others
 
@@ -95,15 +74,17 @@ None. The checker is standard-library only.
 
 ## Verification
 
-Docker (`docker compose run --rm -T slam-dev ...`), 2026-11-05: `ruff check code tests scripts` clean; `mypy code/slam code/main.py` no issues in 51 files; `pytest -q` 520 passed, 18 skipped (git-dependent, no git in image). `python code/main.py --dataset dataset --evaluate`: 518 rows, 0 failures, accepted by `validate_output_csv`, byte-identical on rerun; statuses INCOMPLETE 354 / COMPLETE 154 / NOT_APPLICABLE 10. Public samples: status accuracy 0.906 (29/32), false COMPLETE 0, step F1 0.456 (precision 0.491, recall 0.425), exact cases 0.125. 534 tests pass (Docker), mypy strict clean. Link model on the real data enabled 11 validated groups (e.g. DELETE_RECORD@account_service 44..76 min, 59% held-out resolved, 0 wrong); ANONYMIZE_RECORD@analytics_platform was rejected by the gate (1 wrong in 62 held-out).
+Docker (`docker compose run --rm -T slam-dev ...`), 2026-11-05: `ruff check code tests scripts` clean; `mypy code/slam code/main.py` no issues in 54 files; `pytest -q` **552 passed, 18 skipped** (git-dependent, no git in image). `python code/main.py --dataset dataset --evaluate`: 518 rows, 0 failures, accepted by `validate_output_csv`, byte-identical on a fresh CRLF clone of the official repo. `python scripts/build_submission.py`: 133 files, self-check OK (no dataset, no archives, no `.env`).
+
+Against HackerRank's own `sample_output.csv` (32 cases, official clone): status accuracy 0.906 (29/32), **false COMPLETE 0**, step precision 0.744, recall 0.663, **F1 0.701**, exact cases 11/32, field accuracy 0.771; 161 of 193 expected steps reproduced, evidence id correct on every matched step. HackerRank publishes no answers for the 518, so those cannot be scored.
 
 ## Known limits
 
-- Step-level accuracy is low. All 3 status misses are the safe side (key COMPLETE, we INCOMPLETE). Missing steps are mostly VERIFY_RECORD_ABSENT/ANONYMIZED on records that carry no identifier (404 lookups, anonymized analytics, attachments): activities hold no subject identifier and the data gives no grounded link, so they cannot be attributed. Needs a design decision from Manya, Ashish and Satvika; not guessed here.
-- `support_replica` is not aliased to `support_platform` (3 resources corpus-wide).
-- Some redact/anonymize findings are over-reported: the exposure test counts any direct identifier on the latest observation.
-- `plan()` stays the frozen stub; use `plan_case(context, bundle)` (Q1 still open for the contract).
-- No model call is made; the vision/intent provider paths are unmeasured on a real API.
+- 7 hand-made teaching cases (`account_001`..`010`) use a different timing regime with too few labelled pairs to validate; 7 further cases stay ambiguous (request order, case number and activity-id order were tested as tiebreakers and are at chance).
+- Support records: HackerRank's DELETE-vs-REDACT choice for 2 cases has no safe general rule; `support_replica` is not aliased to `support_platform`.
+- The linker's validated groups were learned on the 518; the 32 public samples are only a proxy and some of their timing patterns differ.
+- `usage_report.md` states 0 model calls (true, the pipeline is deterministic); no real API run has been measured.
+- See `docs/integration/RCA_ACCURACY.md` for the evidence behind every item.
 
 ## Integration notes
 

@@ -14,7 +14,7 @@ from slam.contracts import (
 )
 from slam.runtime.provider import ModelProvider
 
-from .absence import infer_absent_states
+from .absence import infer_absent_states, retained_before_cutoff
 from .graph import build_dependency_graph
 from .identity import resolve_identity
 from .linking import Attribution, CaseLinks, LinkModel
@@ -111,8 +111,16 @@ def reconstruct_with_links(
         owned,
     )
     absent = infer_absent_states(request, bundle, set(owned), timeline.states)
+    retained = frozenset(
+        rule.category for rule in bundle.policy_rules if rule.required_action.upper() == "RETAIN"
+    )
+    late = retained_before_cutoff(
+        request, timeline.excluded_future, retained, (*timeline.states, *absent)
+    )
     all_states = tuple(
-        sorted((*timeline.states, *absent), key=lambda item: (item.system_id, item.resource_id))
+        sorted(
+            (*timeline.states, *absent, *late), key=lambda item: (item.system_id, item.resource_id)
+        )
     )
     ownership_links = _ownership_links(identity.subject_id, explicit, inferred, case_links)
     graph = build_dependency_graph(
