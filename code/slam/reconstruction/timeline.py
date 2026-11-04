@@ -239,13 +239,21 @@ def reconstruct_timeline(
     states, replica_conflicts = _cross_system_conflicts(states)
     conflicts.extend(replica_conflicts)
 
-    relevant_sources = {
-        span.source_id for observation in eligible + future for span in observation.spans
-    }
+    # Only sources this case can actually rely on. Evidence captured after the cutoff (the
+    # `future` list) must not change the answer, not even through its parse problems.
+    relevant_sources = {span.source_id for observation in eligible for span in observation.spans}
+    postdated_sources = {sid for sid, taken in source_times.items() if taken > request.audit_at}
     coverage: list[str] = []
     for issue in bundle.issues:
-        if issue.severity.value == "error" or issue.source_id in relevant_sources:
-            coverage.append(_issue_text(issue.severity.value, issue.code, issue.source_id))
+        if issue.source_id in postdated_sources:
+            continue
+        # Planning must treat every coverage issue as blocking certification, so only issues
+        # that can hide evidence qualify: any error, and warnings on sources this case uses.
+        # Info notes (for example uninterpreted log noise) are the producer saying "nothing
+        # is missing" and must not stop an otherwise complete case.
+        severity = issue.severity.value
+        if severity == "error" or (severity == "warning" and issue.source_id in relevant_sources):
+            coverage.append(_issue_text(severity, issue.code, issue.source_id))
     for observation in eligible:
         if observation.fields.get("uncertain"):
             coverage.append(f"observation:{observation.observation_id}:uncertain")
