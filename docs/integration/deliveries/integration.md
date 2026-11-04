@@ -2,8 +2,8 @@
 owner: integration
 workstream: Integration, seam tests, CI, packaging
 status: IN_PROGRESS
-contract_version: 1.0.0
-contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
+contract_version: 1.1.0
+contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
 built_on: 0d02a57be96b70f055e69e7c0d16adb652b7b882
 merge_after: none
 last_updated: 2026-11-05
@@ -18,6 +18,8 @@ last_updated: 2026-11-05
 Branch `integration/reconstruction`: Manya's reconstruction merged intact (`152b0a2`, her `log.txt` left out), Lalith's evaluation scorer/validator/data-quality (`e3d16b4`) and Satvika's answer validator (`d70892e`) merged unchanged, plus:
 - fixes to Manya's code found by running it on the real corpus: intent recall 20/32 -> 32/32 samples (0/518 unclear, 10 non-deletion = exactly the 10 CLASSIFY_REQUEST claims); activity edges no longer invert mitigations (116 flow + 58 restore edges) and 303 plain records no longer read as flows; info-level ingestion notes no longer block certification; identity as of `audit_at`; names no longer attach evidence; injection guard accepts plurals.
 - `plan_case(context, bundle)` (policy + ordered steps), `export_output_csv`, `slam.pipeline.run/evaluate_samples`, `code/main.py --dataset dataset [--evaluate]`.
+- Contract 1.1.0 adoption (Lalith `fa6076a`): reconstruction fills `policy_rules` and `evidence_captured_at`; `plan(context)` works from the context alone.
+- `scripts/smoke_test.py` and `docs/integration/RCA_ACCURACY.md` (root causes of the step-level gap).
 - Tests: `tests/reconstruction/test_integration_fixes.py`, `tests/planning/test_engine.py`, `tests/integration/test_pipeline_seam.py`; reports in `evaluation/`.
 
 ## Cross-owner edits
@@ -56,6 +58,8 @@ Each file below is another owner's or unowned; the owner must confirm.
 - `tests/reconstruction/test_timeline.py` - Manya: merged from origin/manya, then fixed (see Delivers)
 - `tests/contracts/test_owned_boundaries.py` - Lalith: Manya's edit (reconstruction-stub assertion replaced by an empty-evidence assertion), carried in by the merge; Lalith to confirm.
 - `README.md` - Lalith: replaced the stale "modules raise NotImplementedError" paragraph and added run instructions; Lalith to confirm.
+- `code/slam/planning/api.py` - Satvika: `plan(context)` now delegates to the engine (contract 1.1.0 makes the context sufficient); Satvika to review.
+- `scripts/smoke_test.py` - unowned new tool: seeded one-case smoke test with invariants and a diff against the key.
 
 ## Requires from others
 

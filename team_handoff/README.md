@@ -11,7 +11,7 @@ This directory divides the approved SLAM portable deletion-audit-agent plan into
 | Satvika | `03_SATVIKA_POLICY_PLANNING.md` | Policy evaluation, decision, ordered steps, CSV export |
 | Lalith | `04_LALITH_RUNTIME_EVALUATION_INTEGRATION.md` | API-model adapter, metering, evaluation, Docker and final integration |
 
-Every teammate must also receive `SHARED_BUILD_CONTRACT.md`. The shared contract is frozen at version `1.0.0`; nobody may silently change its schemas or module boundaries.
+Every teammate must also receive `SHARED_BUILD_CONTRACT.md`. The shared contract is version `1.1.0`; nobody may silently change its schemas or module boundaries. Contract identity is pinned by `contracts/SCHEMA_SHA256`.
 
 ## Integration order
 

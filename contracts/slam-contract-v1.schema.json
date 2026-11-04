@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.0.0",
+  "contract_version": "1.1.0",
   "models": {
     "Activity": {
       "additionalProperties": false,
@@ -235,7 +235,7 @@
           "type": "string"
         },
         "contract_version": {
-          "default": "1.0.0",
+          "default": "1.1.0",
           "title": "Contract Version",
           "type": "string"
         },
@@ -449,6 +449,50 @@
           "title": "IdentityLink",
           "type": "object"
         },
+        "PolicyRule": {
+          "additionalProperties": false,
+          "properties": {
+            "attributes": {
+              "additionalProperties": true,
+              "title": "Attributes",
+              "type": "object"
+            },
+            "category": {
+              "minLength": 1,
+              "title": "Category",
+              "type": "string"
+            },
+            "condition": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Condition"
+            },
+            "required_action": {
+              "minLength": 1,
+              "title": "Required Action",
+              "type": "string"
+            },
+            "rule_id": {
+              "minLength": 1,
+              "title": "Rule Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "rule_id",
+            "category",
+            "required_action"
+          ],
+          "title": "PolicyRule",
+          "type": "object"
+        },
         "RequestIntent": {
           "enum": [
             "DELETION",
@@ -542,7 +586,7 @@
           "type": "array"
         },
         "contract_version": {
-          "default": "1.0.0",
+          "default": "1.1.0",
           "title": "Contract Version",
           "type": "string"
         },
@@ -562,6 +606,14 @@
           "title": "Eligible Observation Ids",
           "type": "array"
         },
+        "evidence_captured_at": {
+          "additionalProperties": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": "Evidence Captured At",
+          "type": "object"
+        },
         "excluded_future_observation_ids": {
           "default": [],
           "items": {
@@ -576,6 +628,14 @@
             "$ref": "#/$defs/IdentityLink"
           },
           "title": "Identity Links",
+          "type": "array"
+        },
+        "policy_rules": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PolicyRule"
+          },
+          "title": "Policy Rules",
           "type": "array"
         },
         "request": {
@@ -901,7 +961,7 @@
               "title": "Request Id"
             },
             "schema_version": {
-              "default": "1.0.0",
+              "default": "1.1.0",
               "title": "Schema Version",
               "type": "string"
             },
@@ -1489,7 +1549,7 @@
           "type": "array"
         },
         "contract_version": {
-          "default": "1.0.0",
+          "default": "1.1.0",
           "title": "Contract Version",
           "type": "string"
         },
@@ -1646,7 +1706,7 @@
           "title": "Request Id"
         },
         "schema_version": {
-          "default": "1.0.0",
+          "default": "1.1.0",
           "title": "Schema Version",
           "type": "string"
         },
@@ -2066,7 +2126,7 @@
               "title": "Request Id"
             },
             "schema_version": {
-              "default": "1.0.0",
+              "default": "1.1.0",
               "title": "Schema Version",
               "type": "string"
             },
@@ -2692,7 +2752,7 @@
               "title": "Request Id"
             },
             "schema_version": {
-              "default": "1.0.0",
+              "default": "1.1.0",
               "title": "Schema Version",
               "type": "string"
             },

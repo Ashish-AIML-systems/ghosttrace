@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import csv
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -25,12 +26,14 @@ def validate_output_csv(
     *,
     expected_case_ids: Iterable[str],
     eligible_evidence_ids: Iterable[str] | None = None,
+    evidence_captured_at: Mapping[str, Mapping[str, datetime]] | None = None,
+    audit_cutoffs: Mapping[str, datetime] | None = None,
 ) -> tuple[CaseAnswer, ...]:
     """Read and validate CSV shape, row set, step semantics, order, and citations.
 
-    `eligible_evidence_ids` should contain only participant-visible evidence that
-    is eligible for the relevant audit cutoff. If omitted, non-empty citations are
-    checked for presence but cannot be checked against an evidence catalog.
+    `eligible_evidence_ids` is a legacy run-wide allowlist. Prefer the per-case
+    `evidence_captured_at` and `audit_cutoffs` pair, which validates citation
+    existence and temporal eligibility independently for each case.
     """
 
     expected = tuple(expected_case_ids)
@@ -38,6 +41,8 @@ def validate_output_csv(
         raise OutputValidationError("expected_case_ids contains duplicates")
     expected_set = set(expected)
     evidence_set = set(eligible_evidence_ids) if eligible_evidence_ids is not None else None
+    if (evidence_captured_at is None) != (audit_cutoffs is None):
+        raise ValueError("evidence_captured_at and audit_cutoffs must be provided together")
 
     try:
         with path.open(newline="", encoding="utf-8-sig") as handle:
@@ -83,7 +88,33 @@ def validate_output_csv(
         except (ValueError, TypeError, ValidationError, json.JSONDecodeError) as exc:
             raise OutputValidationError(f"row {row_number} ({case_id}): {exc}") from exc
 
-        _validate_case_semantics(answer, row_number, evidence_set)
+        case_evidence = evidence_set
+        if evidence_captured_at is not None and audit_cutoffs is not None:
+            if case_id not in evidence_captured_at or case_id not in audit_cutoffs:
+                raise OutputValidationError(
+                    f"row {row_number} ({case_id}): missing per-case evidence times or audit cutoff"
+                )
+            cutoff = audit_cutoffs[case_id]
+            if cutoff.tzinfo is None or cutoff.utcoffset() is None:
+                raise OutputValidationError(
+                    f"row {row_number} ({case_id}): audit cutoff must be timezone-aware"
+                )
+            case_times = evidence_captured_at[case_id]
+            if any(
+                captured_at.tzinfo is None or captured_at.utcoffset() is None
+                for captured_at in case_times.values()
+            ):
+                raise OutputValidationError(
+                    f"row {row_number} ({case_id}): evidence timestamps must be timezone-aware"
+                )
+            case_evidence = {
+                evidence_id
+                for evidence_id, captured_at in case_times.items()
+                if captured_at <= cutoff
+            }
+            if evidence_set is not None:
+                case_evidence &= evidence_set
+        _validate_case_semantics(answer, row_number, case_evidence)
         answers.append(answer)
 
     missing = expected_set - seen

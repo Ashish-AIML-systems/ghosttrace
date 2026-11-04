@@ -2,8 +2,8 @@
 owner: satvika
 workstream: Policy, decision, ordered steps, CSV export
 status: IN_PROGRESS
-contract_version: 1.0.0
-contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
+contract_version: 1.1.0
+contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
 built_on: 0d02a57be96b70f055e69e7c0d16adb652b7b882
 merge_after: ashish, manya
 last_updated: 2026-11-04
@@ -25,10 +25,11 @@ None.
 
 | From | What | Why | Status |
 |---|---|---|---|
-| Ashish / integrator | Decide how `PolicyRule`s reach `plan()` | The frozen `CaseContext` has no policy rules; this blocks policy implementation | OPEN (Q1) |
-| Manya / integrator | Confirm evidence IDs and eligibility guarantees | Findings and completed verifications must cite eligible participant-visible evidence | OPEN (Q2; Manya's note defines visible IDs as source/activity/audit IDs) |
-| Lalith / integrator | Confirm exporter signature and call site | Needed before implementing export and orchestration wiring | OPEN (Q3) |
-| Ashish | Supply/locate the participant policy rule data and observed-state vocabulary | The rules file is not present in this checkout | OPEN |
+| Lalith / integrator | Start from `dev` and adopt contract 1.1.0 | The current shared contract includes policy rules and timestamped participant-visible citations in `CaseContext` | Required before implementation/integration; use the current `contracts/SCHEMA_SHA256` |
+| Lalith / integrator | Contract 1.1.0 interface and exporter signature | `CaseContext.policy_rules`, `evidence_captured_at`, visible citation IDs, and `export_output_csv(answers, required_case_ids, path) -> None` are now specified | Implement against current contract; reject evidence citations missing from the map or later than `request.audit_at` |
+| Manya | `CaseContext` | Your only input | Not started; build against fixtures of the contract type |
+| Ashish | `PolicyRule` rows (15 in the supplied dataset): `rule_id`, `category`, `required_action`, `condition`, `attributes`; ingestion's `observed_state` vocabulary | Planning, not ingestion, maps free-string states to the closed output states (`CONTRACT_DECISIONS.md`) | Merged in `dev` @ `2666ffe`; vocabulary in `INGESTION_PLAN.md` section 3 |
+| Ashish | You review ingestion | Cross-review assignment in `SHARED_BUILD_CONTRACT.md` | PARTLY: your comment-only review of PR #3 said "good"; record any findings against `INGESTION_PLAN.md` sections 3 and 5 here |
 
 ## Provides to others
 

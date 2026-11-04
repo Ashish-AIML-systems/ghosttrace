@@ -112,9 +112,12 @@ class _Item:
 
 
 def _exposed(
-    context: CaseContext, observations: dict[str, Observation], state: ResourceState
+    context: CaseContext, observations: dict[str, Observation] | None, state: ResourceState
 ) -> bool:
     """Does the latest eligible observation still carry a direct identifier?"""
+
+    if observations is None:
+        return state.state not in {"REDACTED", "ANONYMIZED"}
 
     mine = [
         observations[oid]
@@ -234,7 +237,7 @@ def blocking_reasons(context: CaseContext) -> tuple[str, ...]:
     return tuple(sorted(set(reasons)))
 
 
-def plan_case(context: CaseContext, bundle: EvidenceBundle) -> CaseAnswer:
+def plan_case(context: CaseContext, bundle: EvidenceBundle | None = None) -> CaseAnswer:
     """Apply policy to one reconstructed case and return its ordered answer."""
 
     case_id = context.request.case_id
@@ -251,9 +254,14 @@ def plan_case(context: CaseContext, bundle: EvidenceBundle) -> CaseAnswer:
             blocking_issues=("request intent is unclear; deletion is not authorized",),
         )
 
-    actions = {rule.category: rule.required_action.upper() for rule in bundle.policy_rules}
-    observations = {item.observation_id: item for item in bundle.observations}
-    captured = {source.source_id: source.captured_at for source in bundle.sources}
+    rules = context.policy_rules or (bundle.policy_rules if bundle else ())
+    actions = {rule.category: rule.required_action.upper() for rule in rules}
+    # With a bundle we can see which identifiers a record still carries. Without one
+    # (the frozen plan(context)) exposure is unknown, so a live record is assumed exposed.
+    observations = {item.observation_id: item for item in bundle.observations} if bundle else None
+    captured = dict(context.evidence_captured_at) or (
+        {source.source_id: source.captured_at for source in bundle.sources} if bundle else {}
+    )
 
     items: list[_Item] = []
     for state in context.resource_states:

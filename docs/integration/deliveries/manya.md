@@ -2,8 +2,8 @@
 owner: manya
 workstream: Request intent, identity, temporal state, dependency graph
 status: READY_FOR_INTEGRATION
-contract_version: 1.0.0
-contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
+contract_version: 1.1.0
+contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
 built_on: 0d02a57be96b70f055e69e7c0d16adb652b7b882
 merge_after: ashish
 last_updated: 2026-11-04
@@ -29,9 +29,10 @@ last_updated: 2026-11-04
 
 | From | What | Why | Status |
 |---|---|---|---|
-| Ashish | `EvidenceBundle` and `AuditRequest` contract inputs | Reconstruction accepts only the frozen B1 boundary | MET on `dev` |
-| Lalith | Frozen `ModelProvider` protocol and fake provider | Optional model fallback must remain testable and tool-free | MET on `dev` |
-| Integrator | Meaning of participant-visible evidence references | Downstream planning must resolve every evidence ID | RESOLVED: source, activity, and audit IDs are used |
+| Lalith / integrator | Contract 1.1.0 adoption | `origin/manya` (`152b0a2`) contains reconstruction implementation/tests built on contract 1.0.0; `CaseContext` gained policy rules and evidence timestamps in 1.1.0 | Update branch to 1.1.0, populate both new fields, refresh hash, rerun owned checks |
+| Ashish | `EvidenceBundle` from `ingest()` and `AuditRequest` rows from `load_requests()` | Your only input | MET: merged in `dev` @ `2666ffe`; read `INGESTION_PLAN.md` section 3 and `CORPUS_REPORT.md` before using states |
+| Lalith / integrator | Contract 1.1.0 interface | `CaseContext.policy_rules` carries exact rules; `evidence_captured_at` maps participant-visible file/activity/audit IDs to aware timestamps. Evidence ID tuples must never contain observation hashes. | Required before integration; copy rules and complete timestamp map, including later evidence so the planner can enforce `audit_at` |
+| Lalith | Fake `ModelProvider` for tests; approval for any new dependency | RapidFuzz is mentioned in your handoff but is not in `uv.lock` (`networkx` is) | OPEN until requested |
 
 ## Provides to others
 

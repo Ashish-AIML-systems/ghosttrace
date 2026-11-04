@@ -122,3 +122,26 @@ def test_export_is_sorted_exact_and_rejects_missing_cases(tmp_path: Path) -> Non
     assert lines[0] == "case_id,deletion_status,steps_json" and lines[1].startswith("c1,COMPLETE,")
     with pytest.raises(ExportError):
         export_output_csv([answer], ["c1", "c2"], target)
+
+
+def test_frozen_plan_works_from_the_context_alone_and_context_carries_1_1_0_fields() -> None:
+    from slam.planning import plan
+
+    bundle = _bundle(_obs("p", "account_1", "account_service", "USER_PROFILE", "PRESENT"))
+    context = reconstruct(_request(), bundle)
+    assert context.policy_rules == RULES
+    assert set(context.evidence_captured_at) == {"evidence_1"}
+    assert all(t <= context.request.audit_at for t in context.evidence_captured_at.values())
+    answer = plan(context)
+    assert answer.deletion_status is DeletionStatus.INCOMPLETE
+    assert [s.operation for s in answer.steps if s.phase.value == "REMEDIATION"] == [
+        Operation.DELETE_RECORD
+    ]
+
+
+def test_without_a_bundle_exposure_is_assumed_never_a_false_complete() -> None:
+    from slam.planning import plan
+
+    bundle = _bundle(_obs("a", "analytics_1", "analytics_platform", "ANALYTICS_PROFILE", "PRESENT"))
+    answer = plan(reconstruct(_request(), bundle))
+    assert answer.deletion_status is DeletionStatus.INCOMPLETE

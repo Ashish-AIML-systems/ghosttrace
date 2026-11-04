@@ -1,4 +1,4 @@
-"""Frozen cross-team data contracts for SLAM contract version 1.0.0."""
+"""Frozen cross-team data contracts for SLAM contract version 1.1.0."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-CONTRACT_VERSION = "1.0.0"
+CONTRACT_VERSION = "1.1.0"
 
 
 class ContractModel(BaseModel):
@@ -356,10 +356,14 @@ class CaseContext(ContractModel):
     contract_version: str = CONTRACT_VERSION
     request: AuditRequest
     request_intent: RequestIntent
+    policy_rules: tuple[PolicyRule, ...] = ()
     subject_id: str | None = None
     identity_links: tuple[IdentityLink, ...] = ()
     eligible_observation_ids: tuple[str, ...] = ()
     excluded_future_observation_ids: tuple[str, ...] = ()
+    # Keys are participant-visible file_id/activity_id/audit_id values, never observation hashes.
+    # Reconstruction includes only evidence captured at or before request.audit_at.
+    evidence_captured_at: dict[str, datetime] = Field(default_factory=dict)
     resource_states: tuple[ResourceState, ...] = ()
     active_flows: tuple[GraphEdge, ...] = ()
     restore_risks: tuple[GraphEdge, ...] = ()
@@ -370,6 +374,15 @@ class CaseContext(ContractModel):
     @classmethod
     def require_current_contract(cls, value: str) -> str:
         return EvidenceBundle.require_current_contract(value)
+
+    @field_validator("evidence_captured_at")
+    @classmethod
+    def require_timezone_aware_evidence_times(
+        cls, value: dict[str, datetime]
+    ) -> dict[str, datetime]:
+        for captured_at in value.values():
+            AuditRequest.require_timezone(captured_at)
+        return value
 
 
 _OPERATION_RULES: dict[Operation, tuple[Phase, StepState]] = {
