@@ -4,9 +4,9 @@ workstream: Integration, seam tests, CI, packaging
 status: IN_PROGRESS
 contract_version: 1.0.0
 contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
-built_on: 0bbee13
+built_on: 0d02a57be96b70f055e69e7c0d16adb652b7b882
 merge_after: none
-last_updated: 2026-11-04
+last_updated: 2026-11-05
 ---
 
 # Integration - mechanism, CI, merge record
@@ -15,15 +15,37 @@ last_updated: 2026-11-04
 
 ## Delivers
 
-- The PR documentation mechanism: `docs/integration/` (README, DEPENDENCY_MATRIX, INTEGRATOR_PLAYBOOK,
-  CONTRACT_CHANGELOG, `ownership.toml`, one delivery note per workstream), the PR template, the
-  `Delivery check` workflow, and `scripts/delivery_check.py` (`ci`, `preflight`, `status`) with
-  tests in `tests/integration/`.
-- Later: seam tests between the three modules, `main.py --dataset` wiring, final packaging checks.
+Branch `integration/reconstruction`: Manya's reconstruction merged intact (`152b0a2`, her `log.txt` left out), Lalith's evaluation scorer/validator/data-quality (`e3d16b4`) and Satvika's answer validator (`d70892e`) merged unchanged, plus:
+- fixes to Manya's code found by running it on the real corpus: intent recall 20/32 -> 32/32 samples (0/518 unclear, 10 non-deletion = exactly the 10 CLASSIFY_REQUEST claims); activity edges no longer invert mitigations (116 flow + 58 restore edges) and 303 plain records no longer read as flows; info-level ingestion notes no longer block certification; identity as of `audit_at`; names no longer attach evidence; injection guard accepts plurals.
+- `plan_case(context, bundle)` (policy + ordered steps), `export_output_csv`, `slam.pipeline.run/evaluate_samples`, `code/main.py --dataset dataset [--evaluate]`.
+- Tests: `tests/reconstruction/test_integration_fixes.py`, `tests/planning/test_engine.py`, `tests/integration/test_pipeline_seam.py`; reports in `evaluation/`.
 
 ## Cross-owner edits
 
-None.
+Each file below is another owner's; their owner must confirm.
+
+- `code/evaluation/__init__.py` - Lalith: merged from origin/lalith unchanged
+- `code/slam/evaluation/__init__.py` - Lalith: merged from origin/lalith unchanged
+- `code/slam/evaluation/data_quality.py` - Lalith: merged from origin/lalith unchanged
+- `code/slam/evaluation/scorer.py` - Lalith: merged from origin/lalith unchanged
+- `code/slam/evaluation/validator.py` - Lalith: merged from origin/lalith unchanged
+- `code/slam/planning/validation.py` - Satvika: merged from origin/satvika unchanged
+- `code/slam/reconstruction/api.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `code/slam/reconstruction/graph.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `code/slam/reconstruction/identity.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `code/slam/reconstruction/request_intent.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `code/slam/reconstruction/timeline.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `tests/contracts/test_owned_boundaries.py` - other
+- `tests/evaluation/test_data_quality.py` - Lalith: merged from origin/lalith unchanged
+- `tests/evaluation/test_scorer.py` - Lalith: merged from origin/lalith unchanged
+- `tests/evaluation/test_validator.py` - Lalith: merged from origin/lalith unchanged
+- `tests/planning/test_validation.py` - Satvika: merged from origin/satvika unchanged
+- `tests/reconstruction/conftest.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `tests/reconstruction/test_api.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `tests/reconstruction/test_graph.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `tests/reconstruction/test_identity.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `tests/reconstruction/test_request_intent.py` - Manya: merged from origin/manya, then fixed (see Delivers)
+- `tests/reconstruction/test_timeline.py` - Manya: merged from origin/manya, then fixed (see Delivers)
 
 ## Requires from others
 
@@ -46,18 +68,15 @@ None. The checker is standard-library only.
 
 ## Verification
 
-- `tests/integration/test_delivery_check.py`: gate rules, preflight and merge dry-run against
-  throwaway git repositories, plus validation of the notes committed in this repository.
-- The `Delivery check` workflow runs `scripts/delivery_check.py ci` on every PR to `main` and `dev`.
+Docker (`docker compose run --rm -T slam-dev ...`), 2026-11-05: `ruff check code tests scripts` clean; `mypy code/slam code/main.py` no issues in 51 files; `pytest -q` 520 passed, 18 skipped (git-dependent, no git in image). `python code/main.py --dataset dataset --evaluate`: 518 rows, 0 failures, accepted by `validate_output_csv`, byte-identical on rerun; statuses INCOMPLETE 354 / COMPLETE 154 / NOT_APPLICABLE 10. Public samples: status accuracy 0.906 (29/32), false COMPLETE 0, step F1 0.335, exact cases 0.031.
 
 ## Known limits
 
-- The gate checks that documentation exists, is well formed, is consistent with the tree and
-  declares cross-owner edits. It cannot judge whether a note is *true*; that is the reviewer's job.
-- The workflows ship in the same PR that introduces them (`delivery-check.yml` is new; `merge-check.yml`,
-  `push-check.yml` and the `python-gate` action were adopted from the working tree and were not written
-  by this change). Their first real run on GitHub is that PR's own run; until it is green they are
-  untested there. `dev` still needs the two checks marked as required (playbook, Step 0).
+- Step-level accuracy is low. All 3 status misses are the safe side (key COMPLETE, we INCOMPLETE). Missing steps are mostly VERIFY_RECORD_ABSENT/ANONYMIZED on records that carry no identifier (404 lookups, anonymized analytics, attachments): activities hold no subject identifier and the data gives no grounded link, so they cannot be attributed. Needs a design decision from Manya, Ashish and Satvika; not guessed here.
+- `support_replica` is not aliased to `support_platform` (3 resources corpus-wide).
+- Some redact/anonymize findings are over-reported: the exposure test counts any direct identifier on the latest observation.
+- `plan()` stays the frozen stub; use `plan_case(context, bundle)` (Q1 still open for the contract).
+- No model call is made; the vision/intent provider paths are unmeasured on a real API.
 
 ## Integration notes
 

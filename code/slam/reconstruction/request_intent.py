@@ -40,7 +40,7 @@ from slam.runtime.provider import ModelProvider, ModelProviderError
 PROMPT_VERSION = "reconstruction-intent-v1"
 
 _INJECTION = re.compile(
-    r"\b(ignore|disregard|override)\b.{0,50}\b(instruction|prompt|system|developer)\b"
+    r"\b(ignore|disregard|override)\b.{0,50}\b(instructions?|prompts?|system|developer)\b"
     r"|\b(system prompt|developer message|jailbreak)\b"
 )
 
