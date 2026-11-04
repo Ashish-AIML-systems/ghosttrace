@@ -55,6 +55,29 @@ _ORDER = (
     "ACCOUNT_TOMBSTONE",
     "USER_PROFILE",
 )
+# The official operation order (problem statement, "Allowed Operations"), used to order steps.
+_OP_ORDER = {
+    op: index
+    for index, op in enumerate(
+        (
+            Operation.REPORT_REMAINING_RECORD,
+            Operation.REPORT_EXPOSED_PII,
+            Operation.REPORT_ACTIVE_DATA_FLOW,
+            Operation.REPORT_RESTORE_RISK,
+            Operation.DISABLE_DATA_FLOW,
+            Operation.BLOCK_RESTORE,
+            Operation.DELETE_RECORD,
+            Operation.REDACT_RECORD,
+            Operation.ANONYMIZE_RECORD,
+            Operation.VERIFY_RECORD_ABSENT,
+            Operation.VERIFY_RECORD_PRESENT,
+            Operation.VERIFY_RECORD_REDACTED,
+            Operation.VERIFY_RECORD_ANONYMIZED,
+            Operation.VERIFY_DATA_FLOW_DISABLED,
+            Operation.VERIFY_RESTORE_BLOCKED,
+        )
+    )
+}
 _STATE_OF = {
     Operation.VERIFY_RECORD_ABSENT: StepState.ABSENT,
     Operation.VERIFY_RECORD_PRESENT: StepState.PRESENT,
@@ -130,10 +153,7 @@ def _exposed(
         return False
     latest = max(item.effective_time for item in mine)
     return any(
-        any(
-            key in _DIRECT_IDENTIFIERS and value.strip()
-            for key, value in item.identifiers.items()
-        )
+        any(key in _DIRECT_IDENTIFIERS and value.strip() for key, value in item.identifiers.items())
         for item in mine
         if item.effective_time == latest
     )
@@ -210,9 +230,7 @@ def _cite(state: ResourceState, captured: dict[str, datetime]) -> str:
     return max(known, key=lambda item: (captured[item], item))
 
 
-def _step(
-    number: int, operation: Operation, state: ResourceState, evidence_id: str
-) -> Step:
+def _step(number: int, operation: Operation, state: ResourceState, evidence_id: str) -> Step:
     return Step(
         step_no=number,
         phase=_PHASE_OF.get(operation, Phase.VERIFICATION),
@@ -272,34 +290,37 @@ def plan_case(context: CaseContext, bundle: EvidenceBundle | None = None) -> Cas
         )
         if item is not None:
             items.append(item)
-    items.sort(key=lambda item: item.rank)
-
     violations = [item for item in items if item.remediation is not None]
     reasons = blocking_reasons(context)
-    steps: list[Step] = []
+
+    def ordered(
+        entries: list[tuple[Operation, ResourceState, str]],
+    ) -> list[Step]:
+        """Spec order: operation order of the table, then system_id, then resource_id."""
+
+        entries = sorted(entries, key=lambda e: (_OP_ORDER[e[0]], e[1].system_id, e[1].resource_id))
+        return [
+            _step(number, op, state, evidence)
+            for number, (op, state, evidence) in enumerate(entries, 1)
+        ]
+
+    steps: list[Step]
     if not violations and not reasons and items:
-        for item in items:
-            steps.append(
-                _step(len(steps) + 1, item.verification, item.state, _cite(item.state, captured))
-            )
+        steps = ordered(
+            [(item.verification, item.state, _cite(item.state, captured)) for item in items]
+        )
         status = DeletionStatus.COMPLETE
     else:
         status = DeletionStatus.INCOMPLETE
-        for item in violations:
-            assert item.finding is not None
-            steps.append(
-                _step(len(steps) + 1, item.finding, item.state, _cite(item.state, captured))
-            )
-        for first in (Operation.DISABLE_DATA_FLOW, Operation.BLOCK_RESTORE):
-            for item in violations:
-                if item.remediation is first:
-                    steps.append(_step(len(steps) + 1, first, item.state, ""))
-        for item in violations:
-            if item.remediation not in {Operation.DISABLE_DATA_FLOW, Operation.BLOCK_RESTORE}:
-                assert item.remediation is not None
-                steps.append(_step(len(steps) + 1, item.remediation, item.state, ""))
-        for item in items:
-            steps.append(_step(len(steps) + 1, item.verification, item.state, ""))
+        findings = [(i.finding, i.state, _cite(i.state, captured)) for i in violations if i.finding]
+        remediation = [(i.remediation, i.state, "") for i in violations if i.remediation]
+        verification = [(i.verification, i.state, "") for i in items]
+        steps = []
+        for group in (findings, remediation, verification):
+            steps += [
+                step.model_copy(update={"step_no": len(steps) + k})
+                for k, step in enumerate(ordered(group), 1)
+            ]
 
     return CaseAnswer(
         case_id=case_id,

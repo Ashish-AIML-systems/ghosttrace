@@ -1,4 +1,4 @@
-# RCA: why step-level accuracy is low (public samples: status 0.906, step F1 0.335)
+# RCA: why step-level accuracy is low (public samples: status 0.906, step F1 0.441 after the ordering fix; was 0.335)
 
 Method: ran the real pipeline on the 32 public samples, diffed every case against
 `sample_output.csv`, traced each missing step back to the files, and did not tune anything to the
@@ -21,6 +21,7 @@ key (AGENTS.md forbids case-family shortcuts). Reproduce: `python scripts/smoke_
 | `DISABLE_DATA_FLOW` / `CHECK_*` / `BLOCK_RESTORE` read as risks | 116 flow + 58 restore edges | token-based activity classes |
 | Plain search/export records counted as data flows | 303 of 417 flow edges | exact `DATA_FLOW` category |
 | Info-level ingestion notes blocked certification | 204/518 contexts | only error/relevant-warning issues block |
+| **Step order was invented, not the specified one** | The problem statement ("Rules") fixes order: phase, then the operation order of its table, then `system_id`, then `resource_id` ascending. The planner used its own order (copies before profile). | Sequence accuracy 3.1% -> 12.5%, step F1 0.335 -> 0.441, exact cases 3.1% -> 12.5%; found only by reading the spec after the question "what is missing?" | sort key = (operation order, system_id, resource_id) |
 | Injection guard missed plurals ("ignore all previous instructions") | found by a new test | `instructions?` |
 | Contract 1.1.0 fields not populated | Lalith's `fa6076a` | reconstruction fills `policy_rules`, `evidence_captured_at`; `plan(context)` now works |
 

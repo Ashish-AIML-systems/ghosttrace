@@ -88,7 +88,7 @@ None. The checker is standard-library only.
 
 ## Verification
 
-Docker (`docker compose run --rm -T slam-dev ...`), 2026-11-05: `ruff check code tests scripts` clean; `mypy code/slam code/main.py` no issues in 51 files; `pytest -q` 520 passed, 18 skipped (git-dependent, no git in image). `python code/main.py --dataset dataset --evaluate`: 518 rows, 0 failures, accepted by `validate_output_csv`, byte-identical on rerun; statuses INCOMPLETE 354 / COMPLETE 154 / NOT_APPLICABLE 10. Public samples: status accuracy 0.906 (29/32), false COMPLETE 0, step F1 0.335, exact cases 0.031.
+Docker (`docker compose run --rm -T slam-dev ...`), 2026-11-05: `ruff check code tests scripts` clean; `mypy code/slam code/main.py` no issues in 51 files; `pytest -q` 520 passed, 18 skipped (git-dependent, no git in image). `python code/main.py --dataset dataset --evaluate`: 518 rows, 0 failures, accepted by `validate_output_csv`, byte-identical on rerun; statuses INCOMPLETE 354 / COMPLETE 154 / NOT_APPLICABLE 10. Public samples: status accuracy 0.906 (29/32), false COMPLETE 0, step F1 0.441 (precision 0.479, recall 0.409), exact cases 0.125, sequence 0.125 (spec step order applied).
 
 ## Known limits
 

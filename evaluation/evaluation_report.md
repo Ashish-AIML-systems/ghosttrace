@@ -5,10 +5,10 @@ Scored with `slam.evaluation.scorer` against `dataset/sample_output.csv` (32 pub
 | Metric | Value |
 |---|---|
 | Case-level deletion-status accuracy | 0.906 |
-| Exact case accuracy | 0.031 |
-| Step precision / recall / F1 | 0.364 / 0.311 / 0.335 |
-| Field-level accuracy | 0.569 |
-| Sequence accuracy | 0.031 |
+| Exact case accuracy | 0.125 |
+| Step precision / recall / F1 | 0.479 / 0.409 / 0.441 |
+| Field-level accuracy | 0.591 |
+| Sequence accuracy | 0.125 |
 | False COMPLETE count | 0 |
 
 Full run: 518 cases, statuses {'INCOMPLETE': 354, 'COMPLETE': 154, 'NOT_APPLICABLE': 10}, 2 not certified (uncertain), 0 failed.

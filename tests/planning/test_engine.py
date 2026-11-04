@@ -75,7 +75,7 @@ def test_complete_case_has_only_evidence_backed_verification() -> None:
     assert answer.steps[0].evidence_id == "evidence_1"
 
 
-def test_incomplete_case_orders_mitigation_before_records_and_copies_before_profile() -> None:
+def test_incomplete_case_follows_the_specified_step_order() -> None:
     answer = _plan(_bundle(
         _obs("p", "account_1", "account_service", "USER_PROFILE", "PRESENT"),
         _obs("s", "search_1", "search_service", "SEARCH_INDEX_ENTRY", "PRESENT"),
@@ -88,7 +88,8 @@ def test_incomplete_case_orders_mitigation_before_records_and_copies_before_prof
     assert [s.operation for s in remediation] == [
         Operation.DISABLE_DATA_FLOW, Operation.BLOCK_RESTORE,
         Operation.DELETE_RECORD, Operation.DELETE_RECORD]
-    assert [s.resource_id for s in remediation[2:]] == ["search_1", "account_1"]
+    # Spec: operation order, then system_id, then resource_id ascending.
+    assert [s.resource_id for s in remediation[2:]] == ["account_1", "search_1"]
     assert ops.index(Operation.DISABLE_DATA_FLOW) < ops.index(Operation.DELETE_RECORD)
     assert all(s.evidence_id == "" for s in answer.steps if s.phase.value != "FINDING")
     assert all(s.evidence_id == "evidence_1" for s in answer.steps if s.phase.value == "FINDING")
