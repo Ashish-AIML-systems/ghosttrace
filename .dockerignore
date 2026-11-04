@@ -1,0 +1,5 @@
+# The image holds only the shared toolchain. Source, participant data, secrets,
+# and caches are mounted at runtime and never baked into the image.
+*
+!Dockerfile
+!docker/entrypoint.sh

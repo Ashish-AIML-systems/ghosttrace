@@ -1,0 +1,19 @@
+# secrets / machine-specific
+.env
+.env.*
+!.env.example
+
+# API/runtime artifacts
+.slam-cache/
+usage-private/
+
+# participant data is local input and must never be committed
+dataset/
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/

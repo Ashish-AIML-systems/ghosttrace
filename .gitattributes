@@ -1,0 +1,10 @@
+# Make every teammate's checkout byte-identical regardless of OS: text files are
+# always LF (Windows git would otherwise convert to CRLF and break shell scripts
+# and show whole-file diffs).
+* text=auto eol=lf
+
+*.png  binary
+*.jpg  binary
+*.pdf  binary
+*.zip  binary
+*.gguf binary

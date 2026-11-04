@@ -1,0 +1,42 @@
+# Shared development environment for the SLAM portable audit agent.
+# Offline quality gate: docker compose run --rm slam-dev
+# Explicit API run: docker compose run --rm -e SLAM_MODEL_PROVIDER=openai slam-dev python code/main.py --dataset dataset
+
+name: slam
+
+services:
+  slam-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: slam-dev:py311
+    working_dir: /workspace
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      SLAM_MODEL_PROVIDER: ${SLAM_MODEL_PROVIDER:-fake}
+      SLAM_MODEL: ${SLAM_MODEL:-fake-structured-v1}
+      SLAM_API_TIMEOUT_SECONDS: ${SLAM_API_TIMEOUT_SECONDS:-60}
+      SLAM_API_MAX_RETRIES: ${SLAM_API_MAX_RETRIES:-2}
+      SLAM_API_MAX_CONCURRENCY: ${SLAM_API_MAX_CONCURRENCY:-4}
+      SLAM_API_BUDGET_USD: ${SLAM_API_BUDGET_USD:-0}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - .:/workspace
+      - slam-venv:/opt/venv
+      - uv-cache:/root/.cache/uv
+      - slam-cache:/work/cache
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        if [ -f pyproject.toml ]; then
+          pytest -q;
+        else
+          python -c "import sqlite3, sys; sqlite3.connect(':memory:').execute('create virtual table t using fts5(x)'); print('SLAM Docker foundation ready: Python ' + sys.version.split()[0] + ', SQLite FTS5 ok')";
+        fi
+
+volumes:
+  slam-venv:
+  uv-cache:
+  slam-cache:
