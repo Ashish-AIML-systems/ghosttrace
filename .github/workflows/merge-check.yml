@@ -1,0 +1,83 @@
+name: Merge check
+
+# Answers: "does this change still work when combined with everything else already on the target branch?"
+#
+# * pull_request: GitHub checks out refs/pull/N/merge, i.e. the PR head ALREADY MERGED into the
+#   current tip of main/dev. The gate therefore runs the PR's commits together with every other
+#   teammate's commits and tests that are on the target branch. No conflict-free merge, no run.
+# * push to main/dev: the same gate on the real post-merge result, so a bad integration is
+#   noticed immediately even if it was merged without waiting for the PR check.
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: merge-check-${{ github.event.pull_request.number || github.ref }}
+  # Supersede stale PR runs, but verify every individual post-merge push.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  SLAM_MODEL_PROVIDER: fake
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  merge-gate:
+    name: Merge gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      # v7.0.1. Depth 2 keeps both parents of the merge commit for the contract notice below.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: Show exactly what is being tested
+        shell: bash
+        run: |
+          echo "tested commit: $(git rev-parse HEAD)"
+          echo "parents:       $(git log -1 --format=%P)"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "This is the PR head merged into the current tip of ${{ github.base_ref }}."
+          fi
+
+      - name: Notice when the frozen contract changes
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          # HEAD^1 is the target-branch tip, so this lists what the PR brings in.
+          changed=$(git diff --name-only HEAD^1 HEAD -- code/slam/contracts.py contracts/)
+          if [ -n "$changed" ]; then
+            echo "::warning title=Frozen contract 1.0.0 changed::Needs Lalith's merge and notice to all four teammates (SHARED_BUILD_CONTRACT.md)."
+            echo "$changed"
+          fi
+
+      - uses: ./.github/actions/python-gate
+
+  docker-platform:
+    name: Docker platform
+    needs: merge-gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Build the shared image
+        run: docker compose build
+
+      - name: Offline test suite inside the platform image
+        # The documented team command: syncs uv.lock with --frozen, then runs pytest.
+        run: docker compose run --rm slam-dev
+
+      - name: Foundation smoke test
+        run: docker compose run --rm slam-dev python code/main.py --foundation-status

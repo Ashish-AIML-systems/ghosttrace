@@ -1,0 +1,34 @@
+name: Push check
+
+# Runs on every push to a feature/teammate branch and answers one question:
+# "is this branch, on its own, compatible with the platform and the project requirements?"
+# main and dev are covered by merge-check.yml instead.
+
+on:
+  push:
+    branches-ignore: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: push-check-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SLAM_MODEL_PROVIDER: fake
+  PYTHONDONTWRITEBYTECODE: "1"
+
+jobs:
+  quick-gate:
+    name: Quick gate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      # v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/python-gate
