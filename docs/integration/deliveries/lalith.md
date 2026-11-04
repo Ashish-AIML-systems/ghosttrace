@@ -25,8 +25,14 @@ Lalith: correct anything that is wrong and keep this current in every PR from br
 - Contract models and generated schema (`code/slam/contracts.py`, `contracts/`), `ModelProvider`
   with fake and OpenAI providers (`code/slam/runtime/`), cache keys, usage metering, `Settings`,
   Docker/Compose, `uv.lock`, and `run_cases` in `runtime/orchestrator.py`.
-- Not visible on any branch yet: evaluation harness (`code/evaluation`, `tests/evaluation`),
-  `main.py --dataset` wiring, usage and evaluation reports, packaging checks.
+- Evaluation primitives are now on `lalith`: output contract validator and challenge scorer
+  (`code/slam/evaluation/`, re-exported under `code/evaluation/`) with focused tests under
+  `tests/evaluation/`.
+- Data-quality diagnostics and evidence coverage estimates are implemented in
+  `code/slam/evaluation/data_quality.py`. Coverage values are explicit checklist fractions, not
+  probabilities of answer correctness. Diagnostics do not mutate decisions.
+- Still open: full `main.py --dataset` wiring, run-level usage/evaluation reports, packaging checks,
+  failure-isolated orchestration, and final end-to-end evaluation.
 
 ## Cross-owner edits
 
@@ -57,13 +63,16 @@ None open from this workstream. Open requests from others are tracked in `CONTRA
 
 ## Verification
 
-Baseline checks are recorded in the commits above. This note has not been re-verified by its owner
-since the integrator created it; run `docker compose run --rm slam-dev pytest -q tests/contracts
-tests/runtime` and record the result here.
+Docker checks for this increment: `pytest -q tests/evaluation` (12 passed),
+`ruff check code tests scripts` (passed), and `mypy code/slam code/main.py` (43 source files passed).
+The full repository test suite must still be run after teammate integration.
 
 ## Known limits
 
-Evaluation harness, wiring and reports are not started. Real-API behaviour has never been measured.
+The scorer requires a reference CSV and does not imply hidden-answer access. Data-quality patterns
+are diagnostics for exact-time/resource contradictions and identifier collisions; they do not
+resolve those conflicts. Case coverage is a transparent heuristic checklist, not calibrated
+confidence. Real-API behaviour has never been measured.
 
 ## Integration notes
 
