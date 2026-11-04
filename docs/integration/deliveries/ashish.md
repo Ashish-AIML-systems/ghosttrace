@@ -2,8 +2,8 @@
 owner: ashish
 workstream: Evidence ingestion
 status: INTEGRATED
-contract_version: 1.0.0
-contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
+contract_version: 1.1.0
+contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
 built_on: 0bbee13
 merge_after: none
 last_updated: 2026-11-04
@@ -53,8 +53,7 @@ last_updated: 2026-11-04
 |---|---|---|---|
 | Manya | `EvidenceBundle`: sources, observations, current identities, identity changes, activities, issues | `ingest()` | The nine rules in `INGESTION_PLAN.md` section 3. The ones people get wrong: `effective_time` is when the evidence *saw* the state (snapshot capture time), not when data last changed; evidence after `audit_at` is kept and **you** filter it; `NOT_FOUND` is a lookup result, not proof of deletion; `SNAPSHOT_SCOPE` observations are what make absence meaningful; systems are kept as logged (`profile_service` is not merged into `account_service` for you); document/OCR facts only say "this id appears with these identifiers"; `uncertain=true` and `ingestion issues` must reach `coverage_issues`, never be dropped |
 | Manya | `AuditRequest` rows | `load_requests()` | Emails keep original text; `email_normalized` is the matching key |
-| Satvika | `EvidenceBundle.policy_rules` (15 rules in the supplied dataset), `PolicyRule.required_action/condition/attributes` | bundle | `plan(context)` does not receive the bundle: see open question Q1 in `DEPENDENCY_MATRIX.md` |
-| Satvika | Participant-visible ids usable as citations: `SourceRecord.source_id` (file_id), `Activity.activity_id`, `IdentityChangeEvent.audit_id`; `SourceRecord.captured_at` for eligibility | bundle | Which of these ids appear in `*_evidence_ids` is open question Q2 |
+| Satvika | Exact `PolicyRule` rows and timestamped participant-visible citations | `CaseContext.policy_rules` and `CaseContext.evidence_captured_at` populated by Manya | Contract 1.1.0 resolves the interface; see `DEPENDENCY_MATRIX.md` |
 | Lalith | `ingest` once per run, `load_requests`, corpus report, ledger and extraction cache under `cache_dir` | `slam.ingestion` | Orchestrator should call `ingest` once and reuse the bundle for all 518 requests |
 
 ## Contract and dependency requests

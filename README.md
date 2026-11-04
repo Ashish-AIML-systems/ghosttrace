@@ -20,7 +20,7 @@ SLAM is the planned portable, AI-assisted deletion-audit agent for the HackerRan
 
 ## Implemented foundation
 
-Contract version `1.0.0` is now executable rather than only documented. Lalith's baseline provides:
+Contract version `1.1.0` is now executable rather than only documented. Lalith's baseline provides:
 
 - frozen Pydantic cross-team models and generated JSON Schema;
 - typed ownership boundaries for `ingest`, `reconstruct`, and `plan`;
@@ -52,16 +52,16 @@ docker compose run --rm slam-dev python code/main.py --foundation-status
 
 ## Teammate start point
 
-Each teammate should branch from the published `lalith` baseline, then edit only their owned module:
+Each teammate should branch from the published `dev` baseline (currently contract 1.1.0), then edit only their owned module:
 
 ```bash
 git fetch origin
 git switch <your-name>
-git merge --ff-only origin/lalith
+git merge --ff-only origin/dev
 docker compose run --rm slam-dev pytest -q tests/contracts
 ```
 
-If a named branch already has independent commits, merge `origin/lalith` normally instead of using
+If a named branch already has independent commits, merge `origin/dev` normally instead of using
 `--ff-only`, resolve only owned-file conflicts, and rerun the contract suite. The canonical schema
 hash is stored in `contracts/SCHEMA_SHA256`; interface drift requires team review.
 

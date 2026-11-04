@@ -1,4 +1,4 @@
-# Contract 1.0.0 ingestion decisions
+# Contract decisions (current contract 1.1.0)
 
 This file resolves the ingestion questions raised on 2026-11-04. The Python definitions in
 `code/slam/contracts.py` are authoritative.
@@ -57,3 +57,17 @@ The approved non-AGPL stack is pypdf, Pillow, pytesseract, and the Debian `tesse
 Ordinary contract tests make no network or model API calls. OCR quality and language coverage must be
 measured on the supplied screenshots; OCR failure or low-confidence output becomes an ingestion issue
 and never proof of absence.
+
+## Reconstruction and planning interface (1.1.0)
+
+- `CaseContext.policy_rules` carries the exact `EvidenceBundle.policy_rules` rows into `plan(context)`;
+  planning remains a pure function and does not open dataset files.
+- Identity, resource, and graph evidence IDs are participant-visible `file_id`, `activity_id`, or
+  `audit_id` values. Observation SHA-256 IDs are internal fact identifiers and must not appear as output
+  citations.
+- `CaseContext.evidence_captured_at` maps participant-visible evidence IDs to timezone-aware capture or
+  event times. It includes future-dated evidence so planning can explicitly exclude anything after
+  `request.audit_at`.
+- The output exporter contract is
+  `export_output_csv(answers, required_case_ids, path) -> None`. It rejects defects; Lalith's validator
+  independently re-reads the resulting CSV and checks case-specific evidence cutoffs.

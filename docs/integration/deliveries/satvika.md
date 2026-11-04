@@ -2,8 +2,8 @@
 owner: satvika
 workstream: Policy, decision, ordered steps, CSV export
 status: NOT_STARTED
-contract_version: 1.0.0
-contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
+contract_version: 1.1.0
+contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
 built_on: none
 merge_after: ashish, manya
 last_updated: 2026-11-04
@@ -21,10 +21,8 @@ status to IN_PROGRESS and fill every section (CI rejects TODO/TBD placeholders a
 
 | From | What | Why | Status |
 |---|---|---|---|
-| Lalith / integrator | Start from `dev`, **not** `origin/lalith` | Same reason as Manya: the contract shape differs between the two (`CONTRACT_CHANGELOG.md`) | MET: `dev` @ `2666ffe`. Your branch is still at the initial commit, so `git merge origin/dev` first |
-| Integrator / Lalith | Answer to open question Q1: how `PolicyRule`s reach `plan()` | `plan(context: CaseContext)` is frozen and `CaseContext` has no rules, yet your flow starts with "load the exact rules" and `ResourceState.applicable_rule_id` only names a rule | OPEN, **decide before you write `policy.py`** |
-| Integrator / Lalith | Answer to open question Q2: what `*_evidence_ids` hold | `Step.evidence_id` must be a participant-visible file_id/activity_id/audit_id; eligibility needs a capture time | OPEN |
-| Integrator / Lalith | Answer to open question Q3: the exporter's name, signature and call site | The frozen interface lists `ingest`, `reconstruct`, `plan` only; `main.py` and the orchestrator need to call your CSV export | OPEN |
+| Lalith / integrator | Start from `dev` and adopt contract 1.1.0 | The current shared contract includes policy rules and timestamped participant-visible citations in `CaseContext` | Required before implementation/integration; use the current `contracts/SCHEMA_SHA256` |
+| Lalith / integrator | Contract 1.1.0 interface and exporter signature | `CaseContext.policy_rules`, `evidence_captured_at`, visible citation IDs, and `export_output_csv(answers, required_case_ids, path) -> None` are now specified | Implement against current contract; reject evidence citations missing from the map or later than `request.audit_at` |
 | Manya | `CaseContext` | Your only input | Not started; build against fixtures of the contract type |
 | Ashish | `PolicyRule` rows (15 in the supplied dataset): `rule_id`, `category`, `required_action`, `condition`, `attributes`; ingestion's `observed_state` vocabulary | Planning, not ingestion, maps free-string states to the closed output states (`CONTRACT_DECISIONS.md`) | Merged in `dev` @ `2666ffe`; vocabulary in `INGESTION_PLAN.md` section 3 |
 | Ashish | You review ingestion | Cross-review assignment in `SHARED_BUILD_CONTRACT.md` | PARTLY: your comment-only review of PR #3 said "good"; record any findings against `INGESTION_PLAN.md` sections 3 and 5 here |

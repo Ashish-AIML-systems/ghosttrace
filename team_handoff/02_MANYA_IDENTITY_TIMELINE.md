@@ -4,7 +4,7 @@
 
 Build request interpretation, historical identity resolution, temporal state reconstruction, and the resource/process dependency graph. Your subsystem converts one `AuditRequest` plus Ashish's `EvidenceBundle` into a grounded `CaseContext` at that request's `audit_at`. You do not apply final deletion policy, assign the final status, serialize steps, or write `output.csv`.
 
-Read root `AGENTS.md`, `problem_statement.md`, and `team_handoff/SHARED_BUILD_CONTRACT.md` before coding. Contract version `1.0.0` is frozen.
+Read root `AGENTS.md`, `problem_statement.md`, and `team_handoff/SHARED_BUILD_CONTRACT.md` before coding. Contract version `1.1.0` is current; use the schema hash in `contracts/SCHEMA_SHA256`.
 
 ## Owned paths
 
@@ -71,7 +71,7 @@ The provider may propose request intent or extract an identity hint from ambiguo
 ## AI coding agent start prompt
 
 ```text
-Read AGENTS.md, problem_statement.md, SHARED_BUILD_CONTRACT.md, and this file completely. Implement only code/slam/reconstruction and tests/reconstruction for contract 1.0.0. Begin with temporal identity and cutoff tests. Consume EvidenceBundle through its public interface and return CaseContext. Use deterministic exact/time-aware linking and event-sourced state reconstruction; fuzzy matching only proposes corroborated candidates. Build bounded dependency graphs for copies, sync/import, backups, restores, and cycles. The shared API provider may propose only ambiguous request intent or hints; it cannot decide identity, state, policy, status, or steps. Default every test to the fake provider. Do not edit contracts or locks; request changes explicitly. Run contract tests, owned tests, Ruff, and mypy in Docker, then deliver changed files, commands/results, known ambiguities, and contract requests.
+Read AGENTS.md, problem_statement.md, SHARED_BUILD_CONTRACT.md, and this file completely. Implement only code/slam/reconstruction and tests/reconstruction for contract 1.1.0. Populate `CaseContext.policy_rules` from the bundle and `evidence_captured_at` with participant-visible `file_id`, `activity_id`, and `audit_id` timestamps, including post-cutoff evidence so planning can exclude it. Never use observation hashes as output evidence IDs. Begin with temporal identity and cutoff tests. Consume EvidenceBundle through its public interface and return CaseContext. Use deterministic exact/time-aware linking and event-sourced state reconstruction; fuzzy matching only proposes corroborated candidates. Build bounded dependency graphs for copies, sync/import, backups, restores, and cycles. The shared API provider may propose only ambiguous request intent or hints; it cannot decide identity, state, policy, status, or steps. Default every test to the fake provider. Do not edit contracts or locks; request changes explicitly. Run contract tests, owned tests, Ruff, and mypy in Docker, then deliver changed files, commands/results, known ambiguities, and contract requests.
 ```
 
 ## Delivery to Lalith

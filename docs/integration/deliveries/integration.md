@@ -2,8 +2,8 @@
 owner: integration
 workstream: Integration, seam tests, CI, packaging
 status: IN_PROGRESS
-contract_version: 1.0.0
-contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
+contract_version: 1.1.0
+contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
 built_on: 0bbee13
 merge_after: none
 last_updated: 2026-11-04

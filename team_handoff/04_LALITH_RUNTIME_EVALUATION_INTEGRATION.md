@@ -4,7 +4,7 @@
 
 Own the shared foundation, API-model runtime, observability, evaluation harness, Docker environment, integration, reproducible full run, and submission packaging. You coordinate contracts and merge the other three workstreams, but you do not silently rewrite their business logic. Your primary responsibility is to make the assembled system reproducible, measurable, safe, and honestly reported.
 
-Read root `AGENTS.md`, `problem_statement.md`, `team_handoff/SHARED_BUILD_CONTRACT.md`, and all three teammate documents. Contract version `1.0.0` is the starting integration boundary.
+Read root `AGENTS.md`, `problem_statement.md`, `team_handoff/SHARED_BUILD_CONTRACT.md`, and all three teammate documents. Contract version `1.1.0` is the current integration boundary.
 
 ## Owned paths
 

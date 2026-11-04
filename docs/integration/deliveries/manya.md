@@ -2,8 +2,8 @@
 owner: manya
 workstream: Request intent, identity, temporal state, dependency graph
 status: NOT_STARTED
-contract_version: 1.0.0
-contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
+contract_version: 1.1.0
+contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
 built_on: none
 merge_after: ashish
 last_updated: 2026-11-04
@@ -21,9 +21,9 @@ status to IN_PROGRESS and fill every section (CI rejects TODO/TBD placeholders a
 
 | From | What | Why | Status |
 |---|---|---|---|
-| Lalith / integrator | Start from `dev`, **not** `origin/lalith` | `origin/lalith` is still the earlier shape of contract 1.0.0 (hash `1d4ca61a...`); `dev` has `7beb34d3...`, which renamed `Observation.state` to `observed_state`, `effective_at` to `effective_time`, `provenance` to `spans`, `SourceRecord.relative_path` to `path`, and lowercased issue severities. See `CONTRACT_CHANGELOG.md` | MET: `dev` @ `2666ffe`. Your branch is still at the initial commit, so `git merge origin/dev` first |
+| Lalith / integrator | Contract 1.1.0 adoption | `origin/manya` (`152b0a2`) contains reconstruction implementation/tests built on contract 1.0.0; `CaseContext` gained policy rules and evidence timestamps in 1.1.0 | Update branch to 1.1.0, populate both new fields, refresh hash, rerun owned checks |
 | Ashish | `EvidenceBundle` from `ingest()` and `AuditRequest` rows from `load_requests()` | Your only input | MET: merged in `dev` @ `2666ffe`; read `INGESTION_PLAN.md` section 3 and `CORPUS_REPORT.md` before using states |
-| Integrator / Lalith | Answer to open question Q2: what `*_evidence_ids` hold (file_id/activity_id/audit_id or observation_id) | You fill `IdentityLink.evidence_ids`, `ResourceState.supporting_evidence_ids`, `GraphEdge.evidence_ids`; Satvika copies them into `Step.evidence_id` | OPEN, decide before you return any `ResourceState` |
+| Lalith / integrator | Contract 1.1.0 interface | `CaseContext.policy_rules` carries exact rules; `evidence_captured_at` maps participant-visible file/activity/audit IDs to aware timestamps. Evidence ID tuples must never contain observation hashes. | Required before integration; copy rules and complete timestamp map, including later evidence so the planner can enforce `audit_at` |
 | Lalith | Fake `ModelProvider` for tests; approval for any new dependency | RapidFuzz is mentioned in your handoff but is not in `uv.lock` (`networkx` is) | OPEN until requested |
 
 ## Provides to others
