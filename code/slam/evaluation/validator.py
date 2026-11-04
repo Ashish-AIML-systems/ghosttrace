@@ -122,7 +122,9 @@ def validate_output_csv(
         preview = ", ".join(sorted(missing)[:10])
         raise OutputValidationError(f"missing {len(missing)} expected case(s): {preview}")
     if len(rows) != len(expected):
-        raise OutputValidationError(f"expected {len(expected)} data rows, found {len(rows)}")
+        raise OutputValidationError(
+            f"expected {len(expected)} data rows, found {len(rows)}"
+        )
     if row_ids != sorted(row_ids):
         raise OutputValidationError("rows must be sorted by case_id")
     return tuple(answers)
@@ -169,5 +171,6 @@ def _validate_case_semantics(
             and step.evidence_id not in eligible_evidence_ids
         ):
             raise OutputValidationError(
-                f"row {row_number}, step {step.step_no}: ineligible evidence_id {step.evidence_id}"
+                f"row {row_number}, step {step.step_no}: ineligible evidence_id "
+                f"{step.evidence_id}"
             )
