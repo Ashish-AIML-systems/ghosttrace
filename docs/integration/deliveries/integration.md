@@ -55,6 +55,7 @@ Each file below is another owner's or unowned; the owner must confirm.
 - `tests/reconstruction/test_request_intent.py` - Manya: merged from origin/manya, then fixed (see Delivers)
 - `tests/reconstruction/test_timeline.py` - Manya: merged from origin/manya, then fixed (see Delivers)
 - `tests/contracts/test_owned_boundaries.py` - Lalith: Manya's edit (reconstruction-stub assertion replaced by an empty-evidence assertion), carried in by the merge; Lalith to confirm.
+- `README.md` - Lalith: replaced the stale "modules raise NotImplementedError" paragraph and added run instructions; Lalith to confirm.
 
 ## Requires from others
 
