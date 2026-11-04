@@ -1,5 +1,8 @@
 # Integrator playbook
 
+> Historical baseline snapshot below describes the state before contract 1.1.0. The interface decisions
+> are now recorded in `DEPENDENCY_MATRIX.md`; merge the current shared contract before teammate work.
+
 Everything the integrator does, in order, with the command and the stop condition for each step.
 Commands are plain `git`, `docker compose` and `python`, so they run unchanged in PowerShell and bash.
 

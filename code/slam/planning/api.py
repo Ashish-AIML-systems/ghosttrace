@@ -1,8 +1,11 @@
-"""Frozen planning interface; implementation is owned by Satvika."""
+"""Frozen planning interface: ``plan(context)`` works from the context alone (contract 1.1.0)."""
 
 from slam.contracts import CaseAnswer, CaseContext
 
+from .engine import plan_case
+
 
 def plan(context: CaseContext) -> CaseAnswer:
-    del context
-    raise NotImplementedError("policy planning is owned by Satvika")
+    """Decide and order one case from its context; exposure is assumed when unknown."""
+
+    return plan_case(context)

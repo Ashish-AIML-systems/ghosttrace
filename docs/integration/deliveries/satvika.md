@@ -1,30 +1,32 @@
 ---
 owner: satvika
 workstream: Policy, decision, ordered steps, CSV export
-status: NOT_STARTED
-contract_version: 1.0.0
-contract_sha256: 7beb34d395f8c05729e3fa7584eb21d82e4c9a130465038d03ae0c9e97a837bd
-built_on: none
+status: IN_PROGRESS
+contract_version: 1.1.0
+contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
+built_on: 0d02a57be96b70f055e69e7c0d16adb652b7b882
 merge_after: ashish, manya
 last_updated: 2026-11-04
 ---
 
 # Satvika - policy, decision, steps, export
 
-<!--
-Pre-filled by the integrator from team_handoff/03_SATVIKA_POLICY_PLANNING.md and from reading
-code/slam/contracts.py. Replace this file's contents on your first PR from branch `satvika`, set
-status to IN_PROGRESS and fill every section (CI rejects TODO/TBD placeholders and empty sections).
--->
+## Delivers
+
+- `validate_answer(answer, *, eligible_evidence_ids=None) -> CaseAnswer` in `code/slam/planning/validation.py` checks contract invariants, evidence on findings and complete-case verifications, future-action citation rules, and optional evidence eligibility. It makes no policy decision.
+- Synthetic validator coverage in `tests/planning/test_validation.py` for valid incomplete/complete/non-applicable answers, invalid operation/state pairs, step numbering and phase order, evidence rules, ineligible evidence, and extra fields.
+- This is the first planning slice; policy loading, treatment decisions, plan generation, and CSV export are not implemented yet.
+
+## Cross-owner edits
+
+None.
 
 ## Requires from others
 
 | From | What | Why | Status |
 |---|---|---|---|
-| Lalith / integrator | Start from `dev`, **not** `origin/lalith` | Same reason as Manya: the contract shape differs between the two (`CONTRACT_CHANGELOG.md`) | MET: `dev` @ `2666ffe`. Your branch is still at the initial commit, so `git merge origin/dev` first |
-| Integrator / Lalith | Answer to open question Q1: how `PolicyRule`s reach `plan()` | `plan(context: CaseContext)` is frozen and `CaseContext` has no rules, yet your flow starts with "load the exact rules" and `ResourceState.applicable_rule_id` only names a rule | OPEN, **decide before you write `policy.py`** |
-| Integrator / Lalith | Answer to open question Q2: what `*_evidence_ids` hold | `Step.evidence_id` must be a participant-visible file_id/activity_id/audit_id; eligibility needs a capture time | OPEN |
-| Integrator / Lalith | Answer to open question Q3: the exporter's name, signature and call site | The frozen interface lists `ingest`, `reconstruct`, `plan` only; `main.py` and the orchestrator need to call your CSV export | OPEN |
+| Lalith / integrator | Start from `dev` and adopt contract 1.1.0 | The current shared contract includes policy rules and timestamped participant-visible citations in `CaseContext` | Required before implementation/integration; use the current `contracts/SCHEMA_SHA256` |
+| Lalith / integrator | Contract 1.1.0 interface and exporter signature | `CaseContext.policy_rules`, `evidence_captured_at`, visible citation IDs, and `export_output_csv(answers, required_case_ids, path) -> None` are now specified | Implement against current contract; reject evidence citations missing from the map or later than `request.audit_at` |
 | Manya | `CaseContext` | Your only input | Not started; build against fixtures of the contract type |
 | Ashish | `PolicyRule` rows (15 in the supplied dataset): `rule_id`, `category`, `required_action`, `condition`, `attributes`; ingestion's `observed_state` vocabulary | Planning, not ingestion, maps free-string states to the closed output states (`CONTRACT_DECISIONS.md`) | Merged in `dev` @ `2666ffe`; vocabulary in `INGESTION_PLAN.md` section 3 |
 | Ashish | You review ingestion | Cross-review assignment in `SHARED_BUILD_CONTRACT.md` | PARTLY: your comment-only review of PR #3 said "good"; record any findings against `INGESTION_PLAN.md` sections 3 and 5 here |
@@ -33,7 +35,27 @@ status to IN_PROGRESS and fill every section (CI rejects TODO/TBD placeholders a
 
 | To | What | Where | They must honour |
 |---|---|---|---|
-| Lalith / orchestrator | `plan(context) -> CaseAnswer` | `code/slam/planning/api.py` | Never returns a convenient status: unresolved or conflicted context gives `ready_for_export=False` with `blocking_issues`; `NOT_APPLICABLE` always has no steps |
-| Lalith / orchestrator | CSV exporter that enforces the required case set | `code/slam/planning/export.py` | Rejects duplicates, missing cases, unsorted rows, invalid JSON, wrong columns, unresolved answers; takes the required case ids from the caller |
-| Lalith / evaluation | Same step/operation/state tables as `contracts.py` | `code/slam/planning/steps.py` | One source of truth: do not fork the `_OPERATION_RULES` table |
-| Everyone | Policy coverage table and an explanation trace in `CaseAnswer.trace` | delivery note, `trace` | Byte-stable `steps_json` for identical input |
+| Lalith / orchestrator | `validate_answer` | `code/slam/planning/validation.py` | This validates a single answer; it does not decide status or replace `CaseAnswer` contract validation. Pass eligible evidence IDs when known. |
+
+## Contract and dependency requests
+
+None for this slice. Q1 may require a contract change; no contract was edited.
+
+## Verification
+
+Run in Docker on 2026-11-04:
+
+- `docker compose run --rm slam-dev pytest -q tests/contracts tests/planning` — 38 passed.
+- `docker compose run --rm slam-dev ruff check code/slam/planning tests/planning` — passed.
+- `docker compose run --rm slam-dev mypy code/slam/planning` — passed.
+
+## Known limits
+
+- This validator does not implement the Judge–Evidence–Verify policy engine or export.
+- Evidence eligibility is checked only when the caller supplies `eligible_evidence_ids`; resolution of the citation/eligibility contract remains open.
+- `deletion_rules.csv` is absent from this checkout. Production policy behavior must wait for the participant rule data and Q1 resolution.
+
+## Integration notes
+
+- Work is on `satvika`, based on `origin/dev` at `0d02a57`; it must not be merged until Ashish and Manya are integrated, per `merge_after`.
+- No tests outside contract and planning validator suites were run for this slice.

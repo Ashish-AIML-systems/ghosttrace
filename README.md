@@ -20,7 +20,7 @@ SLAM is the planned portable, AI-assisted deletion-audit agent for the HackerRan
 
 ## Implemented foundation
 
-Contract version `1.0.0` is now executable rather than only documented. Lalith's baseline provides:
+Contract version `1.1.0` is now executable rather than only documented. Lalith's baseline provides:
 
 - frozen Pydantic cross-team models and generated JSON Schema;
 - typed ownership boundaries for `ingest`, `reconstruct`, and `plan`;
@@ -29,8 +29,41 @@ Contract version `1.0.0` is now executable rather than only documented. Lalith's
 - an explicit orchestration boundary that refuses to fabricate missing results;
 - locked Python 3.11 dependencies and offline contract/runtime tests.
 
-The three teammate modules intentionally raise `NotImplementedError` until their owners replace the
-stubs. This is a dependency boundary, not a claim that the challenge solution is complete.
+Ingestion, reconstruction and a first planner are implemented and wired end to end
+(`code/slam/pipeline.py`); the frozen `plan(context)` stays a stub, and the pipeline calls the
+additive `plan_case(context, bundle)` instead. See "Run the pipeline" below.
+
+## Run the pipeline
+
+Everything runs offline with the default `fake` provider: no API key, no network, no spend. The
+pipeline makes no model call, and the 11 screenshots are read with Tesseract OCR, which is
+installed in the Docker image (a plain Windows/macOS Python run cannot OCR them).
+
+1. Put the participant files in `dataset/` (`deletion_requests.csv`, `user_identities.csv`,
+   `user_audit_log.csv`, `system_activity.csv`, `deletion_rules.csv`, `evidence_files.csv`,
+   `evidence/`). `dataset/` is gitignored and is not part of `code.zip`.
+2. Build once, then generate `output.csv` at the repository root:
+
+   ```bash
+   docker compose build
+   docker compose run --rm slam-dev python code/main.py --dataset dataset
+   ```
+
+   The run ingests the evidence once, then per request reconstructs the case at `audit_at`, applies
+   the deletion rules, orders the steps and validates the answer. A failing case is isolated and
+   reported, never guessed; the command exits non-zero until all 518 cases have a supported answer.
+3. Add `--evaluate` to also score the 32 public samples against `dataset/sample_output.csv` and
+   write `evaluation/evaluation_report.md` and `evaluation/usage_report.md`:
+
+   ```bash
+   docker compose run --rm slam-dev python code/main.py --dataset dataset --evaluate
+   ```
+
+Without Docker: `uv sync --frozen`, install Tesseract, then `python code/main.py --dataset dataset`.
+
+Pipeline stages and owners: `slam.ingestion` (Ashish) -> `slam.reconstruction` (Manya) ->
+`slam.planning` (Satvika) -> `slam.evaluation` validator and scorer (Lalith) -> `output.csv`.
+Known limits and open decisions are in `docs/integration/deliveries/integration.md`.
 
 ## Development environment
 
@@ -52,16 +85,16 @@ docker compose run --rm slam-dev python code/main.py --foundation-status
 
 ## Teammate start point
 
-Each teammate should branch from the published `lalith` baseline, then edit only their owned module:
+Each teammate should branch from the published `dev` baseline (currently contract 1.1.0), then edit only their owned module:
 
 ```bash
 git fetch origin
 git switch <your-name>
-git merge --ff-only origin/lalith
+git merge --ff-only origin/dev
 docker compose run --rm slam-dev pytest -q tests/contracts
 ```
 
-If a named branch already has independent commits, merge `origin/lalith` normally instead of using
+If a named branch already has independent commits, merge `origin/dev` normally instead of using
 `--ff-only`, resolve only owned-file conflicts, and rerun the contract suite. The canonical schema
 hash is stored in `contracts/SCHEMA_SHA256`; interface drift requires team review.
 

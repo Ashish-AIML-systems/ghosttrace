@@ -80,7 +80,7 @@ SAMPLES: dict[str, dict[str, object]] = {
         "source_id": "file-1",
         "locator": "page=1",
     },
-    "EvidenceBundle": {"contract_version": "1.0.0"},
+    "EvidenceBundle": {"contract_version": "1.1.0"},
     "IdentityLink": {
         "left_identifier": "old@example.test",
         "right_identifier": "person@example.test",
@@ -113,6 +113,8 @@ SAMPLES: dict[str, dict[str, object]] = {
             "request_text": "delete",
         },
         "request_intent": "DELETION",
+        "policy_rules": [{"rule_id": "r1", "category": "PROFILE", "required_action": "DELETE"}],
+        "evidence_captured_at": {"file-1": TS, "activity-1": TS, "audit-1": TS},
     },
     "Step": {
         "step_no": 1,

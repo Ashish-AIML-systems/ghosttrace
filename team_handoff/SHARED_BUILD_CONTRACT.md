@@ -1,6 +1,9 @@
 # SLAM shared build contract
 
-Contract version: `1.0.0`
+Contract version: `1.1.0`
+
+Current schema hash: see `contracts/SCHEMA_SHA256`. Version 1.1.0 adds policy rules and timestamped
+participant-visible evidence references to `CaseContext`; see `docs/CONTRACT_DECISIONS.md`.
 
 ## Product and outcome
 
