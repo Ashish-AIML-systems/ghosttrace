@@ -4,7 +4,7 @@ workstream: Integration, seam tests, CI, packaging
 status: IN_PROGRESS
 contract_version: 1.1.0
 contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
-built_on: 0d02a57be96b70f055e69e7c0d16adb652b7b882
+built_on: bf40c395628b508f43a61ebdd4178fefdce1ee0d
 merge_after: none
 last_updated: 2026-11-05
 ---
