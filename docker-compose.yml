@@ -1,108 +1,34 @@
-# Base compose file - USED BY BOTH MAC AND WINDOWS (CPU).
-#
-# Services
-#   db     PostgreSQL (pinned by digest), data kept in a named volume
-#   api    Python API (uvicorn), starts after db is healthy
-#   agent  the audit pipeline / batch job (llama.cpp inside); run on demand
-#
-#   Start db + api (Mac, or Windows):   docker compose up -d --build
-#   Run the audit pipeline:             docker compose run --rm agent
-#   Windows + NVIDIA GPU:               add docker-compose.windows-gpu.yml (see that file)
-#
-# Do NOT add `platform: linux/amd64` anywhere: on Apple Silicon it forces slow
-# x86 emulation. Leaving it out builds natively for the machine you are on, and
-# the digest pins in the Dockerfile / below cover both amd64 and arm64.
+# Shared development environment for the SLAM portable audit agent.
+# Offline quality gate: docker compose run --rm slam-dev
+# Explicit API run: docker compose run --rm -e SLAM_MODEL_PROVIDER=openai slam-dev python code/main.py --dataset dataset
 
-name: audit-agent
-
-# Settings shared by `agent` and `api` so they can never drift apart.
-x-app-env: &app-env
-  DATABASE_URL: postgresql://${POSTGRES_USER:-audit}:${POSTGRES_PASSWORD:-audit}@db:5432/${POSTGRES_DB:-audit}
-  WORK_DIR: /work               # caches / scratch (named volume, NOT a bind mount)
-  PYTHONDONTWRITEBYTECODE: "1"  # keep __pycache__ out of the shared project folder
+name: slam
 
 services:
-  db:
-    # postgres:16-bookworm - pinned. Major-version upgrades need a dump/restore,
-    # so change this deliberately and tell the team.
-    image: postgres:16-bookworm@sha256:e8a07d2c7579b038938cdba6c539e580e5001caf9ea203d397b5cc83e76bd938
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-audit}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-audit}   # dev default - override in .env
-      POSTGRES_DB: ${POSTGRES_DB:-audit}
-    ports:
-      # Loopback only, so the DB is not exposed to the network. If 5432 is taken
-      # by a local Postgres, set DB_PORT in .env.
-      - "127.0.0.1:${DB_PORT:-5432}:5432"
-    volumes:
-      # Named volume (not a bind mount): Postgres needs real Linux file
-      # permissions, which Windows/Mac bind mounts can't provide.
-      - pgdata:/var/lib/postgresql/data
-      # *.sql / *.sh here run once, when the volume is first created. Schema
-      # lives in git so every teammate gets the same one.
-      - ./db/init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 3s
-      retries: 12
-    restart: unless-stopped
-
-  api:
+  slam-dev:
     build:
       context: .
       dockerfile: Dockerfile
-      target: runtime           # no llama.cpp / CUDA needed to serve the API
-    image: audit-agent-api:dev
+    image: slam-dev:py311
     working_dir: /workspace
     environment:
-      <<: *app-env
-    ports:
-      - "127.0.0.1:${API_PORT:-8000}:8000"
-    volumes:
-      - .:/workspace            # same line works on Mac and Windows
-      - venv-api:/opt/venv      # Linux virtualenv, kept off the host
-      - uv-cache:/root/.cache/uv
-      - work:/work
-    depends_on:
-      db:
-        condition: service_healthy
-    # Placeholder entry point (FastAPI/ASGI assumed). `--app-dir code` is used on
-    # purpose: a package literally named `code` would clash with Python's stdlib
-    # `code` module. Change to match your app, e.g. api:app -> code/api.py.
-    command: ["uvicorn", "api:app", "--app-dir", "code", "--host", "0.0.0.0", "--port", "8000"]
-
-  agent:
-    profiles: ["batch"]         # not started by `up`; use `docker compose run --rm agent`
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: agent
-    image: audit-agent:cpu
-    working_dir: /workspace
-    stdin_open: true
-    tty: true
-    environment:
-      <<: *app-env
-      MODEL_DIR: /models        # GGUF model files (read-only mount below)
-      LLAMA_CLI: /usr/local/bin/llama-cli
-      N_GPU_LAYERS: "0"
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      SLAM_MODEL_PROVIDER: ${SLAM_MODEL_PROVIDER:-fake}
+      SLAM_MODEL: ${SLAM_MODEL:-fake-structured-v1}
+      SLAM_API_TIMEOUT_SECONDS: ${SLAM_API_TIMEOUT_SECONDS:-60}
+      SLAM_API_MAX_RETRIES: ${SLAM_API_MAX_RETRIES:-2}
+      SLAM_API_MAX_CONCURRENCY: ${SLAM_API_MAX_CONCURRENCY:-4}
+      SLAM_API_BUDGET_USD: ${SLAM_API_BUDGET_USD:-0}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     volumes:
       - .:/workspace
-      # Model weights; defaults to ./models, override with MODELS_DIR in .env
-      # (e.g. MODELS_DIR=D:/llm-models on Windows, /Users/me/models on Mac).
-      - ${MODELS_DIR:-./models}:/models:ro
-      - venv-agent:/opt/venv
+      - slam-venv:/opt/venv
       - uv-cache:/root/.cache/uv
-      - work:/work
-    depends_on:
-      db:
-        condition: service_healthy
-    command: ["python", "code/main.py"]   # placeholder entry point - change to yours
+      - slam-cache:/work/cache
+    command: ["pytest", "-q"]
 
 volumes:
-  pgdata:
-  venv-api:
-  venv-agent:
+  slam-venv:
   uv-cache:
-  work:
+  slam-cache:

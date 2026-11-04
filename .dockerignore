@@ -1,6 +1,5 @@
-# The image only needs the Dockerfile and docker/entrypoint.sh. Everything else
-# (data, models, caches) is bind-mounted at run time, so keep it out of the
-# build context - model files alone can be many GB.
+# The image holds only the shared toolchain. Source, participant data, secrets,
+# and caches are mounted at runtime and never baked into the image.
 *
 !Dockerfile
 !docker/entrypoint.sh
