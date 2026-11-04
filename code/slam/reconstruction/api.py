@@ -1,12 +1,24 @@
 """Public reconstruction interface for Manya's deterministic subsystem."""
 
+from collections.abc import Mapping
 from datetime import datetime
 
-from slam.contracts import AuditRequest, CaseContext, EvidenceBundle, GraphEdge, ResourceState
+from slam.contracts import (
+    AuditRequest,
+    CaseContext,
+    ConfidenceClass,
+    EvidenceBundle,
+    GraphEdge,
+    IdentityLink,
+    ResourceState,
+)
 from slam.runtime.provider import ModelProvider
 
+from .absence import infer_absent_states, retained_before_cutoff
 from .graph import build_dependency_graph
 from .identity import resolve_identity
+from .linking import Attribution, CaseLinks, LinkModel
+from .ownership import OwnerLink, build_owner_index, owned_by
 from .request_intent import interpret_request
 from .timeline import reconstruct_timeline
 
@@ -46,7 +58,23 @@ def reconstruct(
     *,
     provider: ModelProvider | None = None,
 ) -> CaseContext:
-    """Convert one request and evidence bundle into a grounded cutoff context."""
+    """Frozen interface: explicit ownership (L1) and its closure (L2) only."""
+
+    return reconstruct_with_links(request, bundle, None, provider=provider)
+
+
+def reconstruct_with_links(
+    request: AuditRequest,
+    bundle: EvidenceBundle,
+    link_model: LinkModel | None,
+    *,
+    provider: ModelProvider | None = None,
+) -> CaseContext:
+    """Convert one request and evidence bundle into a grounded cutoff context.
+
+    ``link_model`` (from ``linking.fit``) adds tier-L3 attribution of resources that carry no
+    identifier. With ``None`` only explicit ownership (L1) and its closure (L2) apply.
+    """
 
     intent = interpret_request(request.request_text, provider)
     identity = resolve_identity(request, bundle)
@@ -70,17 +98,36 @@ def reconstruct(
             unresolved_conflicts=identity.conflicts,
         )
 
+    index = link_model.owner_index if link_model else build_owner_index(bundle)
+    explicit = owned_by(index, identity.subject_id, request.audit_at) if identity.subject_id else {}
+    case_links = link_model.for_case(request.case_id) if link_model else None
+    inferred = {a.resource_id: a for a in case_links.attributed} if case_links else {}
+    owned = frozenset(explicit) | frozenset(inferred)
     timeline = reconstruct_timeline(
         request,
         bundle,
         identity.match_values,
         identity.subject_id,
+        owned,
     )
+    absent = infer_absent_states(request, bundle, set(owned), timeline.states)
+    retained = frozenset(
+        rule.category for rule in bundle.policy_rules if rule.required_action.upper() == "RETAIN"
+    )
+    late = retained_before_cutoff(
+        request, timeline.excluded_future, retained, (*timeline.states, *absent)
+    )
+    all_states = tuple(
+        sorted(
+            (*timeline.states, *absent, *late), key=lambda item: (item.system_id, item.resource_id)
+        )
+    )
+    ownership_links = _ownership_links(identity.subject_id, explicit, inferred, case_links)
     graph = build_dependency_graph(
         request,
         bundle,
         timeline.eligible,
-        timeline.states,
+        all_states,
         identity.match_values,
         identity.subject_id,
     )
@@ -97,21 +144,19 @@ def reconstruct(
             )
         )
     )
-    conflicts = tuple(
-        sorted(set((*identity.conflicts, *timeline.conflicts, *graph.conflicts)))
-    )
+    conflicts = tuple(sorted(set((*identity.conflicts, *timeline.conflicts, *graph.conflicts))))
     return CaseContext(
         request=request,
         request_intent=intent.intent,
         policy_rules=bundle.policy_rules,
         subject_id=identity.subject_id,
-        identity_links=identity.links,
+        identity_links=(*identity.links, *ownership_links),
         evidence_captured_at=_cited_evidence_times(
             bundle,
             request.audit_at,
-            timeline.states,
+            all_states,
             (*graph.active_flows, *graph.restore_risks),
-            tuple(i for link in identity.links for i in link.evidence_ids),
+            tuple(i for link in (*identity.links, *ownership_links) for i in link.evidence_ids),
         ),
         eligible_observation_ids=tuple(
             observation.observation_id for observation in timeline.eligible
@@ -119,9 +164,55 @@ def reconstruct(
         excluded_future_observation_ids=tuple(
             observation.observation_id for observation in timeline.excluded_future
         ),
-        resource_states=timeline.states,
+        resource_states=all_states,
         active_flows=graph.active_flows,
         restore_risks=graph.restore_risks,
         coverage_issues=coverage,
         unresolved_conflicts=conflicts,
+    )
+
+
+def _ownership_links(
+    subject_id: str | None,
+    explicit: Mapping[str, OwnerLink],
+    inferred: Mapping[str, Attribution],
+    case_links: CaseLinks | None,
+) -> tuple[IdentityLink, ...]:
+    """One link per owned resource, graded by how the ownership was established."""
+
+    if subject_id is None:
+        return ()
+    links = [
+        IdentityLink(
+            left_identifier=subject_id,
+            right_identifier=resource,
+            relationship="owns_resource",
+            evidence_ids=link.evidence_ids,
+            confidence=ConfidenceClass.EXACT,
+        )
+        for resource, link in sorted(explicit.items())
+    ]
+    links += [
+        _derived(subject_id, attribution, ConfidenceClass.CORROBORATED)
+        for resource, attribution in sorted(inferred.items())
+        if resource not in explicit
+    ]
+    if case_links is not None:
+        links += [
+            _derived(subject_id, candidate, ConfidenceClass.CANDIDATE)
+            for candidate in case_links.candidates
+        ]
+    return tuple(links)
+
+
+def _derived(
+    subject_id: str, attribution: Attribution, confidence: ConfidenceClass
+) -> IdentityLink:
+    return IdentityLink(
+        left_identifier=subject_id,
+        right_identifier=attribution.resource_id,
+        relationship="owns_resource",
+        evidence_ids=attribution.activity_ids,
+        confidence=confidence,
+        review_required=True,
     )

@@ -23,18 +23,18 @@ from slam.ingestion.api import ingest, load_requests
 from slam.pipeline import eligible_evidence_ids, load_request_file
 from slam.planning.engine import plan_case
 from slam.planning.validation import validate_answer
-from slam.reconstruction import reconstruct
+from slam.reconstruction import linking, reconstruct_with_links
 
 
 def _steps(answer: CaseAnswer) -> set[tuple[str, str, str, str]]:
     return {(s.phase.value, s.operation.value, s.system_id, s.resource_id) for s in answer.steps}
 
 
-def check_case(request: AuditRequest, bundle, key_row: dict[str, str] | None) -> list[str]:  # type: ignore[no-untyped-def]
+def check_case(request: AuditRequest, bundle, model, key_row: dict[str, str] | None) -> list[str]:  # type: ignore[no-untyped-def]
     """Return the list of HARD failures; print the trace as a side effect."""
 
     failures: list[str] = []
-    context = reconstruct(request, bundle)
+    context = reconstruct_with_links(request, bundle, model)
     answer = plan_case(context, bundle)
     print(f"\n=== {request.case_id}  audit_at={request.audit_at.isoformat()}")
     print(f"  intent={context.request_intent.value} subject={context.subject_id}")
@@ -66,7 +66,7 @@ def check_case(request: AuditRequest, bundle, key_row: dict[str, str] | None) ->
     future = {o.observation_id for o in bundle.observations if o.effective_time > request.audit_at}
     if future & set(context.eligible_observation_ids):
         failures.append("a future observation is eligible")
-    again = plan_case(reconstruct(request, bundle), bundle)
+    again = plan_case(reconstruct_with_links(request, bundle, model), bundle)
     if again.model_dump_json() != answer.model_dump_json():
         failures.append("not deterministic on rerun")
     status = answer.deletion_status
@@ -106,11 +106,13 @@ def main() -> int:
         (args.dataset / "sample_output.csv").open(encoding="utf-8"))}
     full = load_requests(args.dataset)
     bundle = ingest(args.dataset)
+    model = linking.fit(bundle, tuple({r.case_id: r for r in (*samples, *full)}.values()))
+    print(f"link groups enabled: {len(model.groups)}")
     picks = [(rng.choice(samples), True), (rng.choice(full), False)]
     failures: list[str] = []
     for request, labelled in picks:
         failures += [f"{request.case_id}: {f}" for f in
-                     check_case(request, bundle, key[request.case_id] if labelled else None)]
+                     check_case(request, bundle, model, key[request.case_id] if labelled else None)]
     print("\nSMOKE", "FAIL" if failures else "PASS", *failures, sep="\n  " if failures else " ")
     return 1 if failures else 0
 
