@@ -60,6 +60,12 @@ Each file below is another owner's or unowned; the owner must confirm.
 - `README.md` - Lalith: replaced the stale "modules raise NotImplementedError" paragraph and added run instructions; Lalith to confirm.
 - `code/slam/planning/api.py` - Satvika: `plan(context)` now delegates to the engine (contract 1.1.0 makes the context sufficient); Satvika to review.
 - `scripts/smoke_test.py` - unowned new tool: seeded one-case smoke test with invariants and a diff against the key.
+- `code/slam/contracts.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
+- `code/slam/runtime/orchestrator.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
+- `contracts/CONTRACT_VERSION` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
+- `contracts/SCHEMA_SHA256` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
+- `contracts/slam-contract-v1.schema.json` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
+- `tests/contracts/test_all_model_roundtrips.py` - Lalith: contract 1.1.0 from his `fa6076a`, merged unchanged.
 
 ## Requires from others
 
