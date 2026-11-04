@@ -27,6 +27,10 @@ docker compose build
 docker compose run --rm slam-dev
 ```
 
+Before the application dependency file exists, the second command runs a
+Python and SQLite FTS5 foundation check. After `pyproject.toml` is added, the
+same command installs the locked environment and runs the test suite.
+
 The default provider is `fake`, so normal tests cannot spend money or require credentials. For a deliberately authorized API run, copy `.env.example` to `.env`, set an explicit provider/model and positive budget, and add the API key locally. Never commit `.env`.
 
 No implementation accuracy or hidden-set performance is claimed by the planning artifacts in this repository.

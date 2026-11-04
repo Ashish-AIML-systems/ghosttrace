@@ -33,4 +33,4 @@ RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
 
 WORKDIR /workspace
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["pytest", "-q"]
+CMD ["/bin/sh", "-c", "if [ -f pyproject.toml ]; then pytest -q; else python -c \"import sqlite3, sys; sqlite3.connect(':memory:').execute('create virtual table t using fts5(x)'); print('SLAM Docker foundation ready: Python ' + sys.version.split()[0] + ', SQLite FTS5 ok')\"; fi"]
