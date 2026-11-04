@@ -1,0 +1,6 @@
+# The image only needs the Dockerfile and docker/entrypoint.sh. Everything else
+# (data, models, caches) is bind-mounted at run time, so keep it out of the
+# build context - model files alone can be many GB.
+*
+!Dockerfile
+!docker/entrypoint.sh

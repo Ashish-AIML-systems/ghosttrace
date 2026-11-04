@@ -1,0 +1,14 @@
+# secrets / machine-specific
+.env
+
+# model weights are large and are not part of the code package
+models/
+*.gguf
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
