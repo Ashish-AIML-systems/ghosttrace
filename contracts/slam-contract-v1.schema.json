@@ -1,0 +1,1838 @@
+{
+  "contract_version": "1.0.0",
+  "models": {
+    "ActivityEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "activity_id": {
+          "minLength": 1,
+          "title": "Activity Id",
+          "type": "string"
+        },
+        "activity_type": {
+          "minLength": 1,
+          "title": "Activity Type",
+          "type": "string"
+        },
+        "attributes": {
+          "additionalProperties": true,
+          "title": "Attributes",
+          "type": "object"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "reported_result": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reported Result"
+        },
+        "resource_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resource Id"
+        },
+        "system_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "System Id"
+        }
+      },
+      "required": [
+        "activity_id",
+        "activity_type",
+        "occurred_at"
+      ],
+      "title": "ActivityEvent",
+      "type": "object"
+    },
+    "AuditRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "audit_at": {
+          "format": "date-time",
+          "title": "Audit At",
+          "type": "string"
+        },
+        "case_id": {
+          "minLength": 1,
+          "title": "Case Id",
+          "type": "string"
+        },
+        "email": {
+          "minLength": 3,
+          "title": "Email",
+          "type": "string"
+        },
+        "reported_at": {
+          "format": "date-time",
+          "title": "Reported At",
+          "type": "string"
+        },
+        "reported_status": {
+          "minLength": 1,
+          "title": "Reported Status",
+          "type": "string"
+        },
+        "request_text": {
+          "minLength": 1,
+          "title": "Request Text",
+          "type": "string"
+        },
+        "requested_at": {
+          "format": "date-time",
+          "title": "Requested At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "email",
+        "requested_at",
+        "reported_status",
+        "reported_at",
+        "audit_at",
+        "request_text"
+      ],
+      "title": "AuditRequest",
+      "type": "object"
+    },
+    "CaseAnswer": {
+      "$defs": {
+        "DeletionStatus": {
+          "enum": [
+            "COMPLETE",
+            "INCOMPLETE",
+            "NOT_APPLICABLE"
+          ],
+          "title": "DeletionStatus",
+          "type": "string"
+        },
+        "Operation": {
+          "enum": [
+            "REPORT_REMAINING_RECORD",
+            "REPORT_EXPOSED_PII",
+            "REPORT_ACTIVE_DATA_FLOW",
+            "REPORT_RESTORE_RISK",
+            "DISABLE_DATA_FLOW",
+            "BLOCK_RESTORE",
+            "DELETE_RECORD",
+            "REDACT_RECORD",
+            "ANONYMIZE_RECORD",
+            "VERIFY_RECORD_ABSENT",
+            "VERIFY_RECORD_PRESENT",
+            "VERIFY_RECORD_REDACTED",
+            "VERIFY_RECORD_ANONYMIZED",
+            "VERIFY_DATA_FLOW_DISABLED",
+            "VERIFY_RESTORE_BLOCKED"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "Phase": {
+          "enum": [
+            "FINDING",
+            "REMEDIATION",
+            "VERIFICATION"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "Step": {
+          "additionalProperties": false,
+          "properties": {
+            "evidence_id": {
+              "title": "Evidence Id",
+              "type": "string"
+            },
+            "operation": {
+              "$ref": "#/$defs/Operation"
+            },
+            "phase": {
+              "$ref": "#/$defs/Phase"
+            },
+            "resource_id": {
+              "minLength": 1,
+              "title": "Resource Id",
+              "type": "string"
+            },
+            "state": {
+              "$ref": "#/$defs/StepState"
+            },
+            "step_no": {
+              "minimum": 1,
+              "title": "Step No",
+              "type": "integer"
+            },
+            "system_id": {
+              "minLength": 1,
+              "title": "System Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "step_no",
+            "phase",
+            "system_id",
+            "resource_id",
+            "operation",
+            "state",
+            "evidence_id"
+          ],
+          "title": "Step",
+          "type": "object"
+        },
+        "StepState": {
+          "enum": [
+            "PRESENT",
+            "ACTIVE",
+            "DISABLED",
+            "BLOCKED",
+            "ABSENT",
+            "REDACTED",
+            "ANONYMIZED"
+          ],
+          "title": "StepState",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "blocking_issues": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Blocking Issues",
+          "type": "array"
+        },
+        "case_id": {
+          "minLength": 1,
+          "title": "Case Id",
+          "type": "string"
+        },
+        "contract_version": {
+          "default": "1.0.0",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "deletion_status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeletionStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ready_for_export": {
+          "default": false,
+          "title": "Ready For Export",
+          "type": "boolean"
+        },
+        "steps": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Step"
+          },
+          "title": "Steps",
+          "type": "array"
+        },
+        "trace": {
+          "additionalProperties": true,
+          "title": "Trace",
+          "type": "object"
+        }
+      },
+      "required": [
+        "case_id"
+      ],
+      "title": "CaseAnswer",
+      "type": "object"
+    },
+    "CaseContext": {
+      "$defs": {
+        "AuditRequest": {
+          "additionalProperties": false,
+          "properties": {
+            "audit_at": {
+              "format": "date-time",
+              "title": "Audit At",
+              "type": "string"
+            },
+            "case_id": {
+              "minLength": 1,
+              "title": "Case Id",
+              "type": "string"
+            },
+            "email": {
+              "minLength": 3,
+              "title": "Email",
+              "type": "string"
+            },
+            "reported_at": {
+              "format": "date-time",
+              "title": "Reported At",
+              "type": "string"
+            },
+            "reported_status": {
+              "minLength": 1,
+              "title": "Reported Status",
+              "type": "string"
+            },
+            "request_text": {
+              "minLength": 1,
+              "title": "Request Text",
+              "type": "string"
+            },
+            "requested_at": {
+              "format": "date-time",
+              "title": "Requested At",
+              "type": "string"
+            }
+          },
+          "required": [
+            "case_id",
+            "email",
+            "requested_at",
+            "reported_status",
+            "reported_at",
+            "audit_at",
+            "request_text"
+          ],
+          "title": "AuditRequest",
+          "type": "object"
+        },
+        "ConfidenceClass": {
+          "enum": [
+            "EXACT",
+            "CORROBORATED",
+            "CANDIDATE"
+          ],
+          "title": "ConfidenceClass",
+          "type": "string"
+        },
+        "GraphEdge": {
+          "additionalProperties": false,
+          "properties": {
+            "active": {
+              "title": "Active",
+              "type": "boolean"
+            },
+            "evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "relationship": {
+              "minLength": 1,
+              "title": "Relationship",
+              "type": "string"
+            },
+            "source": {
+              "minLength": 1,
+              "title": "Source",
+              "type": "string"
+            },
+            "target": {
+              "minLength": 1,
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source",
+            "target",
+            "relationship",
+            "evidence_ids",
+            "active"
+          ],
+          "title": "GraphEdge",
+          "type": "object"
+        },
+        "IdentityLink": {
+          "additionalProperties": false,
+          "properties": {
+            "confidence": {
+              "$ref": "#/$defs/ConfidenceClass"
+            },
+            "evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "left_identifier": {
+              "minLength": 1,
+              "title": "Left Identifier",
+              "type": "string"
+            },
+            "relationship": {
+              "minLength": 1,
+              "title": "Relationship",
+              "type": "string"
+            },
+            "review_required": {
+              "default": false,
+              "title": "Review Required",
+              "type": "boolean"
+            },
+            "right_identifier": {
+              "minLength": 1,
+              "title": "Right Identifier",
+              "type": "string"
+            },
+            "valid_from": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Valid From"
+            },
+            "valid_to": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Valid To"
+            }
+          },
+          "required": [
+            "left_identifier",
+            "right_identifier",
+            "relationship",
+            "evidence_ids",
+            "confidence"
+          ],
+          "title": "IdentityLink",
+          "type": "object"
+        },
+        "RequestIntent": {
+          "enum": [
+            "DELETION",
+            "NON_DELETION",
+            "UNCLEAR"
+          ],
+          "title": "RequestIntent",
+          "type": "string"
+        },
+        "ResourceState": {
+          "additionalProperties": false,
+          "properties": {
+            "applicable_rule_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Applicable Rule Id"
+            },
+            "at": {
+              "format": "date-time",
+              "title": "At",
+              "type": "string"
+            },
+            "category": {
+              "minLength": 1,
+              "title": "Category",
+              "type": "string"
+            },
+            "conflicting_evidence_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Conflicting Evidence Ids",
+              "type": "array"
+            },
+            "resource_id": {
+              "minLength": 1,
+              "title": "Resource Id",
+              "type": "string"
+            },
+            "state": {
+              "minLength": 1,
+              "title": "State",
+              "type": "string"
+            },
+            "supporting_evidence_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Supporting Evidence Ids",
+              "type": "array"
+            },
+            "system_id": {
+              "minLength": 1,
+              "title": "System Id",
+              "type": "string"
+            },
+            "uncertain": {
+              "default": false,
+              "title": "Uncertain",
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "system_id",
+            "resource_id",
+            "category",
+            "state",
+            "at"
+          ],
+          "title": "ResourceState",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "active_flows": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/GraphEdge"
+          },
+          "title": "Active Flows",
+          "type": "array"
+        },
+        "contract_version": {
+          "default": "1.0.0",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "coverage_issues": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Coverage Issues",
+          "type": "array"
+        },
+        "eligible_observation_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Eligible Observation Ids",
+          "type": "array"
+        },
+        "excluded_future_observation_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Excluded Future Observation Ids",
+          "type": "array"
+        },
+        "identity_links": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/IdentityLink"
+          },
+          "title": "Identity Links",
+          "type": "array"
+        },
+        "request": {
+          "$ref": "#/$defs/AuditRequest"
+        },
+        "request_intent": {
+          "$ref": "#/$defs/RequestIntent"
+        },
+        "resource_states": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ResourceState"
+          },
+          "title": "Resource States",
+          "type": "array"
+        },
+        "restore_risks": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/GraphEdge"
+          },
+          "title": "Restore Risks",
+          "type": "array"
+        },
+        "subject_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subject Id"
+        },
+        "unresolved_conflicts": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Unresolved Conflicts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "request",
+        "request_intent"
+      ],
+      "title": "CaseContext",
+      "type": "object"
+    },
+    "EvidenceBundle": {
+      "$defs": {
+        "ActivityEvent": {
+          "additionalProperties": false,
+          "properties": {
+            "activity_id": {
+              "minLength": 1,
+              "title": "Activity Id",
+              "type": "string"
+            },
+            "activity_type": {
+              "minLength": 1,
+              "title": "Activity Type",
+              "type": "string"
+            },
+            "attributes": {
+              "additionalProperties": true,
+              "title": "Attributes",
+              "type": "object"
+            },
+            "occurred_at": {
+              "format": "date-time",
+              "title": "Occurred At",
+              "type": "string"
+            },
+            "reported_result": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Reported Result"
+            },
+            "resource_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Resource Id"
+            },
+            "system_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "System Id"
+            }
+          },
+          "required": [
+            "activity_id",
+            "activity_type",
+            "occurred_at"
+          ],
+          "title": "ActivityEvent",
+          "type": "object"
+        },
+        "EvidenceNature": {
+          "enum": [
+            "CLAIM",
+            "OBSERVATION"
+          ],
+          "title": "EvidenceNature",
+          "type": "string"
+        },
+        "IdentityChange": {
+          "additionalProperties": false,
+          "properties": {
+            "changed_at": {
+              "format": "date-time",
+              "title": "Changed At",
+              "type": "string"
+            },
+            "event_id": {
+              "minLength": 1,
+              "title": "Event Id",
+              "type": "string"
+            },
+            "field_name": {
+              "minLength": 1,
+              "title": "Field Name",
+              "type": "string"
+            },
+            "new_value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "New Value"
+            },
+            "old_value": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Old Value"
+            },
+            "source_id": {
+              "title": "Source Id",
+              "type": "string"
+            },
+            "user_id": {
+              "minLength": 1,
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "event_id",
+            "user_id",
+            "field_name",
+            "changed_at",
+            "source_id"
+          ],
+          "title": "IdentityChange",
+          "type": "object"
+        },
+        "IdentitySnapshot": {
+          "additionalProperties": false,
+          "properties": {
+            "identifiers": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Identifiers",
+              "type": "object"
+            },
+            "source_id": {
+              "title": "Source Id",
+              "type": "string"
+            },
+            "updated_at": {
+              "format": "date-time",
+              "title": "Updated At",
+              "type": "string"
+            },
+            "user_id": {
+              "minLength": 1,
+              "title": "User Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "user_id",
+            "identifiers",
+            "updated_at",
+            "source_id"
+          ],
+          "title": "IdentitySnapshot",
+          "type": "object"
+        },
+        "IngestionIssue": {
+          "additionalProperties": false,
+          "properties": {
+            "code": {
+              "minLength": 1,
+              "title": "Code",
+              "type": "string"
+            },
+            "issue_id": {
+              "minLength": 1,
+              "title": "Issue Id",
+              "type": "string"
+            },
+            "message": {
+              "minLength": 1,
+              "title": "Message",
+              "type": "string"
+            },
+            "severity": {
+              "$ref": "#/$defs/IssueSeverity"
+            },
+            "source_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Source Id"
+            }
+          },
+          "required": [
+            "issue_id",
+            "severity",
+            "code",
+            "message"
+          ],
+          "title": "IngestionIssue",
+          "type": "object"
+        },
+        "IssueSeverity": {
+          "enum": [
+            "WARNING",
+            "ERROR",
+            "BLOCKING"
+          ],
+          "title": "IssueSeverity",
+          "type": "string"
+        },
+        "Observation": {
+          "additionalProperties": false,
+          "properties": {
+            "category": {
+              "minLength": 1,
+              "title": "Category",
+              "type": "string"
+            },
+            "effective_at": {
+              "format": "date-time",
+              "title": "Effective At",
+              "type": "string"
+            },
+            "fields": {
+              "additionalProperties": true,
+              "title": "Fields",
+              "type": "object"
+            },
+            "identifiers": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Identifiers",
+              "type": "object"
+            },
+            "nature": {
+              "$ref": "#/$defs/EvidenceNature"
+            },
+            "observation_id": {
+              "minLength": 1,
+              "title": "Observation Id",
+              "type": "string"
+            },
+            "provenance": {
+              "items": {
+                "$ref": "#/$defs/SourceSpan"
+              },
+              "minItems": 1,
+              "title": "Provenance",
+              "type": "array"
+            },
+            "resource_id": {
+              "minLength": 1,
+              "title": "Resource Id",
+              "type": "string"
+            },
+            "state": {
+              "minLength": 1,
+              "title": "State",
+              "type": "string"
+            },
+            "system_id": {
+              "minLength": 1,
+              "title": "System Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "observation_id",
+            "system_id",
+            "resource_id",
+            "category",
+            "state",
+            "effective_at",
+            "nature",
+            "provenance"
+          ],
+          "title": "Observation",
+          "type": "object"
+        },
+        "PolicyRule": {
+          "additionalProperties": false,
+          "properties": {
+            "attributes": {
+              "additionalProperties": true,
+              "title": "Attributes",
+              "type": "object"
+            },
+            "category": {
+              "minLength": 1,
+              "title": "Category",
+              "type": "string"
+            },
+            "condition": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Condition"
+            },
+            "required_action": {
+              "minLength": 1,
+              "title": "Required Action",
+              "type": "string"
+            },
+            "rule_id": {
+              "minLength": 1,
+              "title": "Rule Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "rule_id",
+            "category",
+            "required_action"
+          ],
+          "title": "PolicyRule",
+          "type": "object"
+        },
+        "SourceRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "captured_at": {
+              "format": "date-time",
+              "title": "Captured At",
+              "type": "string"
+            },
+            "kind": {
+              "minLength": 1,
+              "title": "Kind",
+              "type": "string"
+            },
+            "origin": {
+              "minLength": 1,
+              "title": "Origin",
+              "type": "string"
+            },
+            "parser_name": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parser Name"
+            },
+            "parser_version": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parser Version"
+            },
+            "relative_path": {
+              "minLength": 1,
+              "title": "Relative Path",
+              "type": "string"
+            },
+            "sha256": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Sha256",
+              "type": "string"
+            },
+            "source_id": {
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id",
+            "kind",
+            "origin",
+            "relative_path",
+            "captured_at",
+            "sha256"
+          ],
+          "title": "SourceRecord",
+          "type": "object"
+        },
+        "SourceSpan": {
+          "additionalProperties": false,
+          "properties": {
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "quote": {
+              "anyOf": [
+                {
+                  "maxLength": 1000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Quote"
+            },
+            "source_id": {
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id",
+            "locator"
+          ],
+          "title": "SourceSpan",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "activities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ActivityEvent"
+          },
+          "title": "Activities",
+          "type": "array"
+        },
+        "contract_version": {
+          "default": "1.0.0",
+          "title": "Contract Version",
+          "type": "string"
+        },
+        "current_identities": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/IdentitySnapshot"
+          },
+          "title": "Current Identities",
+          "type": "array"
+        },
+        "identity_changes": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/IdentityChange"
+          },
+          "title": "Identity Changes",
+          "type": "array"
+        },
+        "issues": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/IngestionIssue"
+          },
+          "title": "Issues",
+          "type": "array"
+        },
+        "observations": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Observation"
+          },
+          "title": "Observations",
+          "type": "array"
+        },
+        "policy_rules": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PolicyRule"
+          },
+          "title": "Policy Rules",
+          "type": "array"
+        },
+        "sources": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SourceRecord"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "title": "EvidenceBundle",
+      "type": "object"
+    },
+    "GraphEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "relationship": {
+          "minLength": 1,
+          "title": "Relationship",
+          "type": "string"
+        },
+        "source": {
+          "minLength": 1,
+          "title": "Source",
+          "type": "string"
+        },
+        "target": {
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "target",
+        "relationship",
+        "evidence_ids",
+        "active"
+      ],
+      "title": "GraphEdge",
+      "type": "object"
+    },
+    "IdentityChange": {
+      "additionalProperties": false,
+      "properties": {
+        "changed_at": {
+          "format": "date-time",
+          "title": "Changed At",
+          "type": "string"
+        },
+        "event_id": {
+          "minLength": 1,
+          "title": "Event Id",
+          "type": "string"
+        },
+        "field_name": {
+          "minLength": 1,
+          "title": "Field Name",
+          "type": "string"
+        },
+        "new_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "New Value"
+        },
+        "old_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Old Value"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "user_id": {
+          "minLength": 1,
+          "title": "User Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "user_id",
+        "field_name",
+        "changed_at",
+        "source_id"
+      ],
+      "title": "IdentityChange",
+      "type": "object"
+    },
+    "IdentityLink": {
+      "$defs": {
+        "ConfidenceClass": {
+          "enum": [
+            "EXACT",
+            "CORROBORATED",
+            "CANDIDATE"
+          ],
+          "title": "ConfidenceClass",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "confidence": {
+          "$ref": "#/$defs/ConfidenceClass"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "left_identifier": {
+          "minLength": 1,
+          "title": "Left Identifier",
+          "type": "string"
+        },
+        "relationship": {
+          "minLength": 1,
+          "title": "Relationship",
+          "type": "string"
+        },
+        "review_required": {
+          "default": false,
+          "title": "Review Required",
+          "type": "boolean"
+        },
+        "right_identifier": {
+          "minLength": 1,
+          "title": "Right Identifier",
+          "type": "string"
+        },
+        "valid_from": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid From"
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid To"
+        }
+      },
+      "required": [
+        "left_identifier",
+        "right_identifier",
+        "relationship",
+        "evidence_ids",
+        "confidence"
+      ],
+      "title": "IdentityLink",
+      "type": "object"
+    },
+    "IdentitySnapshot": {
+      "additionalProperties": false,
+      "properties": {
+        "identifiers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Identifiers",
+          "type": "object"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "user_id": {
+          "minLength": 1,
+          "title": "User Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "user_id",
+        "identifiers",
+        "updated_at",
+        "source_id"
+      ],
+      "title": "IdentitySnapshot",
+      "type": "object"
+    },
+    "IngestionIssue": {
+      "$defs": {
+        "IssueSeverity": {
+          "enum": [
+            "WARNING",
+            "ERROR",
+            "BLOCKING"
+          ],
+          "title": "IssueSeverity",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "minLength": 1,
+          "title": "Code",
+          "type": "string"
+        },
+        "issue_id": {
+          "minLength": 1,
+          "title": "Issue Id",
+          "type": "string"
+        },
+        "message": {
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/IssueSeverity"
+        },
+        "source_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Id"
+        }
+      },
+      "required": [
+        "issue_id",
+        "severity",
+        "code",
+        "message"
+      ],
+      "title": "IngestionIssue",
+      "type": "object"
+    },
+    "Observation": {
+      "$defs": {
+        "EvidenceNature": {
+          "enum": [
+            "CLAIM",
+            "OBSERVATION"
+          ],
+          "title": "EvidenceNature",
+          "type": "string"
+        },
+        "SourceSpan": {
+          "additionalProperties": false,
+          "properties": {
+            "locator": {
+              "minLength": 1,
+              "title": "Locator",
+              "type": "string"
+            },
+            "quote": {
+              "anyOf": [
+                {
+                  "maxLength": 1000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Quote"
+            },
+            "source_id": {
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "source_id",
+            "locator"
+          ],
+          "title": "SourceSpan",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "effective_at": {
+          "format": "date-time",
+          "title": "Effective At",
+          "type": "string"
+        },
+        "fields": {
+          "additionalProperties": true,
+          "title": "Fields",
+          "type": "object"
+        },
+        "identifiers": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Identifiers",
+          "type": "object"
+        },
+        "nature": {
+          "$ref": "#/$defs/EvidenceNature"
+        },
+        "observation_id": {
+          "minLength": 1,
+          "title": "Observation Id",
+          "type": "string"
+        },
+        "provenance": {
+          "items": {
+            "$ref": "#/$defs/SourceSpan"
+          },
+          "minItems": 1,
+          "title": "Provenance",
+          "type": "array"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "state": {
+          "minLength": 1,
+          "title": "State",
+          "type": "string"
+        },
+        "system_id": {
+          "minLength": 1,
+          "title": "System Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "observation_id",
+        "system_id",
+        "resource_id",
+        "category",
+        "state",
+        "effective_at",
+        "nature",
+        "provenance"
+      ],
+      "title": "Observation",
+      "type": "object"
+    },
+    "PolicyRule": {
+      "additionalProperties": false,
+      "properties": {
+        "attributes": {
+          "additionalProperties": true,
+          "title": "Attributes",
+          "type": "object"
+        },
+        "category": {
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "condition": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Condition"
+        },
+        "required_action": {
+          "minLength": 1,
+          "title": "Required Action",
+          "type": "string"
+        },
+        "rule_id": {
+          "minLength": 1,
+          "title": "Rule Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_id",
+        "category",
+        "required_action"
+      ],
+      "title": "PolicyRule",
+      "type": "object"
+    },
+    "ResourceState": {
+      "additionalProperties": false,
+      "properties": {
+        "applicable_rule_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Applicable Rule Id"
+        },
+        "at": {
+          "format": "date-time",
+          "title": "At",
+          "type": "string"
+        },
+        "category": {
+          "minLength": 1,
+          "title": "Category",
+          "type": "string"
+        },
+        "conflicting_evidence_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Conflicting Evidence Ids",
+          "type": "array"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "state": {
+          "minLength": 1,
+          "title": "State",
+          "type": "string"
+        },
+        "supporting_evidence_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Supporting Evidence Ids",
+          "type": "array"
+        },
+        "system_id": {
+          "minLength": 1,
+          "title": "System Id",
+          "type": "string"
+        },
+        "uncertain": {
+          "default": false,
+          "title": "Uncertain",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "system_id",
+        "resource_id",
+        "category",
+        "state",
+        "at"
+      ],
+      "title": "ResourceState",
+      "type": "object"
+    },
+    "SourceRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "captured_at": {
+          "format": "date-time",
+          "title": "Captured At",
+          "type": "string"
+        },
+        "kind": {
+          "minLength": 1,
+          "title": "Kind",
+          "type": "string"
+        },
+        "origin": {
+          "minLength": 1,
+          "title": "Origin",
+          "type": "string"
+        },
+        "parser_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parser Name"
+        },
+        "parser_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parser Version"
+        },
+        "relative_path": {
+          "minLength": 1,
+          "title": "Relative Path",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "source_id": {
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "kind",
+        "origin",
+        "relative_path",
+        "captured_at",
+        "sha256"
+      ],
+      "title": "SourceRecord",
+      "type": "object"
+    },
+    "SourceSpan": {
+      "additionalProperties": false,
+      "properties": {
+        "locator": {
+          "minLength": 1,
+          "title": "Locator",
+          "type": "string"
+        },
+        "quote": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quote"
+        },
+        "source_id": {
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "locator"
+      ],
+      "title": "SourceSpan",
+      "type": "object"
+    },
+    "Step": {
+      "$defs": {
+        "Operation": {
+          "enum": [
+            "REPORT_REMAINING_RECORD",
+            "REPORT_EXPOSED_PII",
+            "REPORT_ACTIVE_DATA_FLOW",
+            "REPORT_RESTORE_RISK",
+            "DISABLE_DATA_FLOW",
+            "BLOCK_RESTORE",
+            "DELETE_RECORD",
+            "REDACT_RECORD",
+            "ANONYMIZE_RECORD",
+            "VERIFY_RECORD_ABSENT",
+            "VERIFY_RECORD_PRESENT",
+            "VERIFY_RECORD_REDACTED",
+            "VERIFY_RECORD_ANONYMIZED",
+            "VERIFY_DATA_FLOW_DISABLED",
+            "VERIFY_RESTORE_BLOCKED"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "Phase": {
+          "enum": [
+            "FINDING",
+            "REMEDIATION",
+            "VERIFICATION"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "StepState": {
+          "enum": [
+            "PRESENT",
+            "ACTIVE",
+            "DISABLED",
+            "BLOCKED",
+            "ABSENT",
+            "REDACTED",
+            "ANONYMIZED"
+          ],
+          "title": "StepState",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "operation": {
+          "$ref": "#/$defs/Operation"
+        },
+        "phase": {
+          "$ref": "#/$defs/Phase"
+        },
+        "resource_id": {
+          "minLength": 1,
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/StepState"
+        },
+        "step_no": {
+          "minimum": 1,
+          "title": "Step No",
+          "type": "integer"
+        },
+        "system_id": {
+          "minLength": 1,
+          "title": "System Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step_no",
+        "phase",
+        "system_id",
+        "resource_id",
+        "operation",
+        "state",
+        "evidence_id"
+      ],
+      "title": "Step",
+      "type": "object"
+    }
+  }
+}

@@ -18,18 +18,52 @@ SLAM is the planned portable, AI-assisted deletion-audit agent for the HackerRan
 | Satvika | Policy, decision, ordered remediation and verification, output export |
 | Lalith | Contracts, API adapter, Docker, evaluation, orchestration, integration |
 
+## Implemented foundation
+
+Contract version `1.0.0` is now executable rather than only documented. Lalith's baseline provides:
+
+- frozen Pydantic cross-team models and generated JSON Schema;
+- typed ownership boundaries for `ingest`, `reconstruct`, and `plan`;
+- offline fake-provider and OpenAI Responses API adapters;
+- content-addressed cache keys and usage metering;
+- an explicit orchestration boundary that refuses to fabricate missing results;
+- locked Python 3.11 dependencies and offline contract/runtime tests.
+
+The three teammate modules intentionally raise `NotImplementedError` until their owners replace the
+stubs. This is a dependency boundary, not a claim that the challenge solution is complete.
+
 ## Development environment
 
-Docker and Compose provide the shared toolchain. Until application code and its lock file are added, the image is only a reproducible Python/uv foundation.
+Docker and Compose provide the shared, locked toolchain.
 
 ```bash
 docker compose build
 docker compose run --rm slam-dev
+docker compose run --rm slam-dev ruff check code tests scripts
+docker compose run --rm slam-dev mypy code/slam code/main.py
 ```
 
-Before the application dependency file exists, the second command runs a
-Python and SQLite FTS5 foundation check. After `pyproject.toml` is added, the
-same command installs the locked environment and runs the test suite.
+The default Compose command synchronizes `uv.lock` with `--frozen` and runs all offline tests. To
+verify the baseline without starting teammate-owned work, run:
+
+```bash
+docker compose run --rm slam-dev python code/main.py --foundation-status
+```
+
+## Teammate start point
+
+Each teammate should branch from the published `lalith` baseline, then edit only their owned module:
+
+```bash
+git fetch origin
+git switch <your-name>
+git merge --ff-only origin/lalith
+docker compose run --rm slam-dev pytest -q tests/contracts
+```
+
+If a named branch already has independent commits, merge `origin/lalith` normally instead of using
+`--ff-only`, resolve only owned-file conflicts, and rerun the contract suite. The canonical schema
+hash is stored in `contracts/SCHEMA_SHA256`; interface drift requires team review.
 
 The default provider is `fake`, so normal tests cannot spend money or require credentials. For a deliberately authorized API run, copy `.env.example` to `.env`, set an explicit provider/model and positive budget, and add the API key locally. Never commit `.env`.
 
