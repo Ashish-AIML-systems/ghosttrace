@@ -14,9 +14,14 @@ def test_frozen_signatures_are_available() -> None:
     assert tuple(inspect.signature(plan).parameters) == ("context",)
 
 
-def test_unimplemented_owner_module_fails_explicitly() -> None:
-    with pytest.raises(NotImplementedError, match="Ashish"):
-        ingest(Path("dataset"))
+def test_ingestion_fails_loudly_instead_of_returning_a_silent_empty_bundle(
+    tmp_path: Path,
+) -> None:
+    # Ingestion is implemented. A dataset with no manifest must surface an error issue,
+    # never look like "a dataset with nothing in it".
+    bundle = ingest(tmp_path)
+    assert bundle.sources == () and bundle.observations == ()
+    assert any(issue.severity.value == "error" for issue in bundle.issues)
 
 
 def test_reconstruction_stub_does_not_fabricate_context() -> None:
