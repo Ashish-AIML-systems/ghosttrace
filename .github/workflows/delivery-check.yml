@@ -1,0 +1,45 @@
+name: Delivery check
+
+# Answers one question: "does this PR carry the documentation the integrator needs to merge it?"
+#
+# * the author's delivery note (docs/integration/deliveries/<owner>.md) is updated and well formed;
+# * files outside the author's ownership are declared in the note;
+# * contract_sha256 in the note matches contracts/SCHEMA_SHA256 of the merged result;
+# * contract and dependency changes are announced (CONTRACT_CHANGELOG.md, dependency section).
+#
+# Rules: docs/integration/ownership.toml. Explanation and fixes: docs/integration/README.md.
+# Runs on the PR merge ref (the PR already merged into the target), so a contract that moved on the
+# target since the author last looked shows up here.
+
+on:
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delivery-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  delivery-note:
+    name: Delivery note
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # v7.0.1 - same pin as merge-check.yml. Full history: the check needs the merge-base with the target.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Delivery note, ownership and contract hash
+        # The branch name goes through env, never straight into the script text.
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          python3 --version
+          python3 scripts/delivery_check.py ci \
+            --base "origin/${BASE_REF}" --head HEAD --branch "${HEAD_REF}"
