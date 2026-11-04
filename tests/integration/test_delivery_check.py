@@ -7,6 +7,7 @@ drift apart, these tests fail. The last group validates the notes committed in t
 from __future__ import annotations
 
 import importlib.util
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -92,6 +93,11 @@ class Repo:
 
 @pytest.fixture
 def repo(tmp_path: Path) -> Repo:
+    # The Docker image is debian-slim with no git, so every test that needs a real repository
+    # skips there. They still run in the host/CI gates (git is present on the runner); the
+    # "-rs" in the CI pytest command prints this reason, so the skip is visible, not silent.
+    if shutil.which("git") is None:
+        pytest.skip("git is not installed here (the Docker image has none); covered by the CI gate")
     root = tmp_path / "repo"
     root.mkdir()
     run_git(root, "init", "-q", "-b", "dev")
@@ -109,6 +115,12 @@ def repo(tmp_path: Path) -> Repo:
 @pytest.fixture
 def cfg(repo: Repo) -> object:
     return dc.load_config(repo.path, "dev")[0]
+
+
+@pytest.fixture
+def file_cfg() -> object:
+    """The real rules parsed straight from disk: for tests that need no git repository."""
+    return dc.parse_config(OWNERSHIP_TEXT)
 
 
 def check(repo: Repo, cfg: object, branch: str) -> list[object]:
@@ -156,9 +168,9 @@ def test_note_without_front_matter_is_rejected() -> None:
     assert any("front matter" in problem for problem in problems)
 
 
-def test_valid_active_note_has_no_findings(cfg: object) -> None:
+def test_valid_active_note_has_no_findings(file_cfg: object) -> None:
     note, problems = dc.parse_note(note_text())
-    assert dc.validate_note(cfg, "ashish", "p", note, problems) == []
+    assert dc.validate_note(file_cfg, "ashish", "p", note, problems) == []
 
 
 @pytest.mark.parametrize(
@@ -173,18 +185,18 @@ def test_valid_active_note_has_no_findings(cfg: object) -> None:
         ({"body": {"Known limits": ""}}, "is empty"),
     ],
 )
-def test_note_shape_violations(cfg: object, kwargs: dict[str, object], needle: str) -> None:
+def test_note_shape_violations(file_cfg: object, kwargs: dict[str, object], needle: str) -> None:
     note, problems = dc.parse_note(note_text(**kwargs))  # type: ignore[arg-type]
-    out = dc.validate_note(cfg, "ashish", "p", note, problems)
+    out = dc.validate_note(file_cfg, "ashish", "p", note, problems)
     assert needle in messages(out)
 
 
-def test_owner_must_match_file_name(cfg: object) -> None:
+def test_owner_must_match_file_name(file_cfg: object) -> None:
     note, problems = dc.parse_note(note_text(owner="manya"))
-    assert "owner is 'manya'" in messages(dc.validate_note(cfg, "ashish", "p", note, problems))
+    assert "owner is 'manya'" in messages(dc.validate_note(file_cfg, "ashish", "p", note, problems))
 
 
-def test_not_started_note_only_needs_requires_and_provides(cfg: object) -> None:
+def test_not_started_note_only_needs_requires_and_provides(file_cfg: object) -> None:
     text = (
         note_text(status="NOT_STARTED")
         .split("\n## Delivers")[0]
@@ -192,7 +204,7 @@ def test_not_started_note_only_needs_requires_and_provides(cfg: object) -> None:
         + "\n## Requires from others\n\nx\n\n## Provides to others\n\ny\n"
     )
     note, problems = dc.parse_note(text)
-    assert dc.validate_note(cfg, "ashish", "p", note, problems) == []
+    assert dc.validate_note(file_cfg, "ashish", "p", note, problems) == []
 
 
 # ------------------------------------------------------------------ the PR gate
