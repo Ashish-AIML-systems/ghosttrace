@@ -70,6 +70,32 @@ installed in the Docker image (a plain Windows/macOS Python run cannot OCR them)
 
 Without Docker: `uv sync --frozen`, install Tesseract, then `python code/main.py --dataset dataset`.
 
+### Optional: measure a real model (Groq, several keys)
+
+The pipeline never needs a model: rules and OCR answer every case, so a normal run makes 0 model
+calls. To call the two model fallbacks on purpose and get a measured usage report:
+
+1. Copy `.env.example` to `.env` (gitignored) and set `GROQ_API_KEYS=key_one,key_two,...` and a
+   positive `SLAM_API_MAX_CALLS` (optionally `SLAM_API_MAX_TOKENS`). With Docker, do **not** put
+   `SLAM_MODEL_PROVIDER` or `SLAM_MODEL` in `.env`: Compose copies both into every container,
+   including the default offline test run, which would stop being offline. Pass them on the
+   command line as below. Without Docker they may live in `.env`.
+2. `docker compose run --rm -e SLAM_MODEL_PROVIDER=groq -e SLAM_MODEL=<model id> slam-dev python
+   code/main.py --check-keys` probes every key and the model name without spending tokens.
+3. The same command with `--dataset dataset --model-check` instead of `--check-keys` runs the
+   normal pipeline, then sends the 11 screenshots and a sample of request texts
+   (`--model-check-requests N`, default 60) to the model, compares them with OCR and the rules, and
+   writes the real counts into `code/evaluation/usage_report.md`.
+
+Keys are tried in the order listed. The first usable one is kept until it is rejected (401/403) or
+runs out (429); then the next takes over. A short rate limit cools a key down and it comes back
+afterwards; if every key is gone the check stops with a clear error. Groq applies rate limits per
+organization, so extra keys add capacity only when they belong to different organizations. Hard
+ceilings stop the run (`SLAM_API_MAX_CALLS` is exact and counts logical calls, one per request to
+the model; the HTTP attempts a call makes while failing over between keys are listed per key in the
+usage report. `SLAM_API_MAX_TOKENS` and a priced `SLAM_API_BUDGET_USD` can overshoot by one call).
+Key values are never printed or logged, and the model never changes `output.csv`.
+
 Pipeline stages and owners: `slam.ingestion` (Ashish) -> `slam.reconstruction` (Manya) ->
 `slam.planning` (Satvika) -> `slam.evaluation` validator and scorer (Lalith) -> `output.csv`.
 Known limits and open decisions are in `docs/integration/deliveries/integration.md`.
