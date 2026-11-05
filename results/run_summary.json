@@ -1,0 +1,13 @@
+{
+  "cases": 518,
+  "failed_cases": 0,
+  "not_certified_uncertain": 1,
+  "output_file": "output.csv",
+  "output_rows": 518,
+  "output_sha256": "55fabff2a919456c9d33604837338165df0f03b4721ff3ab6a7f0a50bb3edb81",
+  "statuses": {
+    "COMPLETE": 153,
+    "INCOMPLETE": 355,
+    "NOT_APPLICABLE": 10
+  }
+}

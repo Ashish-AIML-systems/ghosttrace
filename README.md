@@ -9,6 +9,52 @@ SLAM is the planned portable, AI-assisted deletion-audit agent for the HackerRan
 - [Shared build contract](team_handoff/SHARED_BUILD_CONTRACT.md)
 - [Official participant problem statement](team_handoff/reference/problem_statement.md)
 
+## Run the console on your machine
+
+The console is the dashboard plus a live analysis you can run after deleting systems in the graph.
+It needs **Docker** (Docker Desktop on Windows or macOS) and the participant files in `dataset/`
+(see "Run the pipeline" below). One command does the rest:
+
+| System | Command |
+|---|---|
+| Windows (PowerShell or cmd) | `scripts\run_console.cmd` |
+| macOS, Linux, Git Bash | `scripts/run_console.sh` |
+| Any | `docker compose --profile console up` (needs the `.env` lines below first) |
+
+The launcher creates `.env` from `.env.example` if it is missing, gives Neo4j a random local password,
+starts Neo4j and the console, waits until it answers and opens **http://127.0.0.1:8765**. The first
+start builds the Docker image and audits all 518 cases (about a minute); later starts take under a
+minute. It builds only the dashboard files that are missing, and the console listens on this machine
+only. Options: `-Port 9000` / `--port 9000`, `-Refresh` / `--refresh` (rebuild the data files),
+`-NoBrowser` / `--no-browser`, `-Stop` / `--stop`.
+
+Model-written explanations in live runs are optional and cost API tokens. Without a key the console
+explains cases with rules and spends nothing. To enable them add `GROQ_API_KEYS`, `SLAM_API_MAX_CALLS`,
+`SLAM_CONSOLE_PROVIDER=groq` and `SLAM_CONSOLE_MODEL=<model id>` to `.env` (see `.env.example`).
+
+If something fails: `docker compose --profile console logs console`. "Docker is not running" means
+Docker Desktop has to be started first. A busy port is changed with `-Port`. The Python run without
+Docker cannot read the 11 screenshots (no Tesseract), so the console is Docker-only.
+
+## Repository layout
+
+| Path | What it is | How it gets there |
+|---|---|---|
+| `code/` | The solution: ingestion, reconstruction, planning, evaluation, runtime, insight layer | written by hand |
+| `dataset/` | The official participant data (never part of `code.zip`) | provided |
+| `docs/` | Plans, integration notes, `INSIGHT_LAYER.md` | written by hand |
+| `evaluation/` | `evaluation_report.md`, `usage_report.md`, side-by-side sample report | `python code/main.py --dataset dataset --evaluate` |
+| `results/` | `run_summary.json`, `sample_scores.json`, `insight_summary.json` | written by the run, see `results/README.md` |
+| `scripts/` | Packaging, smoke test, delivery gate, console launchers | written by hand |
+| `tests/` | Offline test suite | written by hand |
+| `output.csv` | The 518 answers | `python code/main.py --dataset dataset` |
+| `log.txt` | The agent log required by `AGENTS.md` | appended by the coding agents |
+| `AGENTS.md`, `CLAUDE.md` | Agent instructions (`CLAUDE.md` points to `AGENTS.md`) | provided |
+| `problem_statement.md`, `agent_trace_instructions.md` | The official statement and trace instructions | provided |
+
+`Dockerfile`, `docker-compose.yml`, `pyproject.toml`, `uv.lock`, `contracts/`, `dashboard/`, `db/`, `docker/`
+and `team_handoff/` support running the code and stay where they are.
+
 ## Team split
 
 | Owner | Workstream |
@@ -41,7 +87,7 @@ installed in the Docker image (a plain Windows/macOS Python run cannot OCR them)
 
 1. Put the participant files in `dataset/` (`deletion_requests.csv`, `user_identities.csv`,
    `user_audit_log.csv`, `system_activity.csv`, `deletion_rules.csv`, `evidence_files.csv`,
-   `evidence/`). `dataset/` is gitignored and is not part of `code.zip`.
+   `evidence/`). `dataset/` is tracked in the repository (it is the official participant data) and is not part of `code.zip`.
 2. Build once, then generate `output.csv` at the repository root:
 
    ```bash
@@ -99,6 +145,17 @@ Key values are never printed or logged, and the model never changes `output.csv`
 Pipeline stages and owners: `slam.ingestion` (Ashish) -> `slam.reconstruction` (Manya) ->
 `slam.planning` (Satvika) -> `slam.evaluation` validator and scorer (Lalith) -> `output.csv`.
 Known limits and open decisions are in `docs/integration/deliveries/integration.md`.
+
+### Optional: insight layer and console
+
+Failure-risk model (LightGBM), failure patterns (DBSCAN), recreation paths (Neo4j with NetworkX),
+model-written explanations (Groq) and the six-tab Ghost Data Console. It reads what the pipeline
+decided and never changes `output.csv`. Run it with
+`python code/main.py --dataset dataset --insight` and see [docs/INSIGHT_LAYER.md](docs/INSIGHT_LAYER.md)
+for the steps, the exact prompt, the measured numbers and the limits.
+
+With `--serve` the console runs the analysis live on a what-if deletion (Neo4j delete, re-audit,
+LightGBM retrain, DBSCAN, model explanations) instead of showing preprocessed data.
 
 ## Development environment
 

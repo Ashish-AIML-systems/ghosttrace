@@ -1,0 +1,214 @@
+{
+  "audit": {
+    "failure_types": {
+      "ACTIVE_DATA_FLOW": 113,
+      "EXPOSED_PII": 165,
+      "REMAINING_RECORD": 291,
+      "RESTORE_RISK": 26
+    },
+    "reported_vs_audit": [
+      {
+        "audit": "COMPLETE",
+        "n": 91,
+        "reported": "COMPLETE"
+      },
+      {
+        "audit": "INCOMPLETE",
+        "n": 163,
+        "reported": "COMPLETE"
+      },
+      {
+        "audit": "COMPLETE",
+        "n": 26,
+        "reported": "NOT_STARTED"
+      },
+      {
+        "audit": "INCOMPLETE",
+        "n": 76,
+        "reported": "NOT_STARTED"
+      },
+      {
+        "audit": "NOT_APPLICABLE",
+        "n": 10,
+        "reported": "NOT_STARTED"
+      },
+      {
+        "audit": "COMPLETE",
+        "n": 36,
+        "reported": "PARTIALLY_COMPLETE"
+      },
+      {
+        "audit": "INCOMPLETE",
+        "n": 116,
+        "reported": "PARTIALLY_COMPLETE"
+      }
+    ],
+    "status": {
+      "COMPLETE": 153,
+      "INCOMPLETE": 355,
+      "NOT_APPLICABLE": 10
+    }
+  },
+  "explanations": {
+    "incomplete_cases": 355,
+    "model": "qwen/qwen3.8-27b",
+    "stored_reply_tokens": {
+      "input": 98444,
+      "output": 31860,
+      "replies": 80
+    },
+    "written_by_model": 80
+  },
+  "graph": {
+    "crosscheck": {
+      "agree": true,
+      "mismatches": [],
+      "queries": 12
+    },
+    "engine": "neo4j 5.26.32 (driver) / networkx 3.6.1",
+    "systems_with_a_recreation_path": [
+      "analytics_platform",
+      "integration_service",
+      "search_service"
+    ]
+  },
+  "patterns": [
+    {
+      "cases": 138,
+      "id": "P1",
+      "label": "search index entry \u00b7 remaining record + support message \u00b7 exposed pii"
+    },
+    {
+      "cases": 68,
+      "id": "P2",
+      "label": "data flow \u00b7 active data flow + search index entry \u00b7 remaining record"
+    },
+    {
+      "cases": 35,
+      "id": "P3",
+      "label": "search index entry \u00b7 remaining record + user profile \u00b7 remaining record"
+    },
+    {
+      "cases": 25,
+      "id": "P4",
+      "label": "backup archive \u00b7 restore risk"
+    },
+    {
+      "cases": 17,
+      "id": "P5",
+      "label": "search index entry \u00b7 remaining record + user export \u00b7 remaining record"
+    },
+    {
+      "cases": 16,
+      "id": "P6",
+      "label": "support message \u00b7 exposed pii"
+    },
+    {
+      "cases": 11,
+      "id": "P7",
+      "label": "data flow \u00b7 active data flow"
+    },
+    {
+      "cases": 10,
+      "id": "P8",
+      "label": "user profile \u00b7 remaining record"
+    },
+    {
+      "cases": 8,
+      "id": "P9",
+      "label": "user export \u00b7 remaining record"
+    },
+    {
+      "cases": 8,
+      "id": "P10",
+      "label": "search index entry \u00b7 remaining record"
+    },
+    {
+      "cases": 7,
+      "id": "P11",
+      "label": "analytics profile \u00b7 exposed pii"
+    },
+    {
+      "cases": 4,
+      "id": "P12",
+      "label": "search index entry \u00b7 remaining record + support attachment \u00b7 remaining record"
+    },
+    {
+      "cases": 4,
+      "id": "P13",
+      "label": "account tombstone \u00b7 exposed pii"
+    },
+    {
+      "cases": 4,
+      "id": "NOISE",
+      "label": "unmatched / rare combinations"
+    }
+  ],
+  "predictor": {
+    "algorithm": "LightGBM 4.7.0 (gradient-boosted trees)",
+    "audited_cases": 508,
+    "baselines": {
+      "majority_class": {
+        "accuracy": 0.6988188976377953,
+        "precision": 0.6988188976377953,
+        "recall": 1.0
+      },
+      "trust_reported_status": {
+        "accuracy": 0.5570866141732284,
+        "precision": 0.7559055118110236,
+        "recall": 0.5408450704225352
+      }
+    },
+    "cross_validated": {
+      "accuracy": 0.7224409448818898,
+      "auc": 0.7777593666574611,
+      "brier": 0.17108837441059652,
+      "precision": 0.783068783068783,
+      "recall": 0.8338028169014085
+    },
+    "held_out_samples": {
+      "audit_vs_published": {
+        "accuracy": 0.90625,
+        "precision": 0.88,
+        "recall": 1.0
+      },
+      "model": {
+        "accuracy": 0.71875,
+        "auc": 0.7772727272727273,
+        "brier": 0.17350003451471024,
+        "precision": 0.782608695652174,
+        "recall": 0.8181818181818182
+      },
+      "n": 32,
+      "n_incomplete": 22,
+      "source": "dataset/sample_output.csv (public, held out, never trained on)",
+      "trust_reported_status": {
+        "accuracy": 0.53125,
+        "precision": 0.7333333333333333,
+        "recall": 0.5
+      }
+    },
+    "per_failure_type": [
+      {
+        "auc": 0.7501227295041728,
+        "cases": 291,
+        "type": "REMAINING_RECORD"
+      },
+      {
+        "auc": 0.6541567276261153,
+        "cases": 165,
+        "type": "EXPOSED_PII"
+      },
+      {
+        "auc": 0.6218998543743699,
+        "cases": 113,
+        "type": "ACTIVE_DATA_FLOW"
+      },
+      {
+        "auc": 0.4184487711458666,
+        "cases": 26,
+        "type": "RESTORE_RISK"
+      }
+    ]
+  }
+}
