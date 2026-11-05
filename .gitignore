@@ -7,8 +7,8 @@
 .slam-cache/
 usage-private/
 
-# participant data is local input and must never be committed
-dataset/
+# dataset/ is tracked on purpose: it is the official participant data and part of the required
+# repository layout. It is still never part of code.zip (scripts/build_submission.py).
 
 # python
 .venv/

@@ -162,6 +162,9 @@ def _insight(args: argparse.Namespace, settings: Settings) -> int:
         cache_dir=REPO_ROOT / ".slam-cache",
         output_csv=args.output,
     )
+    from slam.results import write_insight_summary
+
+    write_insight_summary(REPO_ROOT / "results", result.output_path)
     print(
         json.dumps(
             {
@@ -225,6 +228,10 @@ def main() -> int:
     )
     if not summary.ok:
         return 1
+    from slam.results import write_results
+
+    for written in write_results(REPO_ROOT / "results", summary, args.output, args.dataset):
+        print(f"wrote {written.relative_to(REPO_ROOT)}")
     if metered is not None:
         from evaluation.model_check import run_model_check
 

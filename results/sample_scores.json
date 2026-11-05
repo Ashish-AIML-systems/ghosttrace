@@ -1,0 +1,12 @@
+{
+  "cases": 32,
+  "exact_case_accuracy": 0.34375,
+  "false_complete_count": 0,
+  "field_accuracy": 0.7709867452135494,
+  "sequence_accuracy": 0.34375,
+  "source": "dataset/sample_output.csv",
+  "status_accuracy": 0.90625,
+  "step_f1": 0.7013698630136985,
+  "step_precision": 0.7441860465116279,
+  "step_recall": 0.6632124352331606
+}

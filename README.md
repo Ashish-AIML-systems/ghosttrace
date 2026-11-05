@@ -36,6 +36,25 @@ If something fails: `docker compose --profile console logs console`. "Docker is 
 Docker Desktop has to be started first. A busy port is changed with `-Port`. The Python run without
 Docker cannot read the 11 screenshots (no Tesseract), so the console is Docker-only.
 
+## Repository layout
+
+| Path | What it is | How it gets there |
+|---|---|---|
+| `code/` | The solution: ingestion, reconstruction, planning, evaluation, runtime, insight layer | written by hand |
+| `dataset/` | The official participant data (never part of `code.zip`) | provided |
+| `docs/` | Plans, integration notes, `INSIGHT_LAYER.md` | written by hand |
+| `evaluation/` | `evaluation_report.md`, `usage_report.md`, side-by-side sample report | `python code/main.py --dataset dataset --evaluate` |
+| `results/` | `run_summary.json`, `sample_scores.json`, `insight_summary.json` | written by the run, see `results/README.md` |
+| `scripts/` | Packaging, smoke test, delivery gate, console launchers | written by hand |
+| `tests/` | Offline test suite | written by hand |
+| `output.csv` | The 518 answers | `python code/main.py --dataset dataset` |
+| `log.txt` | The agent log required by `AGENTS.md` | appended by the coding agents |
+| `AGENTS.md`, `CLAUDE.md` | Agent instructions (`CLAUDE.md` points to `AGENTS.md`) | provided |
+| `problem_statement.md`, `agent_trace_instructions.md` | The official statement and trace instructions | provided |
+
+`Dockerfile`, `docker-compose.yml`, `pyproject.toml`, `uv.lock`, `contracts/`, `dashboard/`, `db/`, `docker/`
+and `team_handoff/` support running the code and stay where they are.
+
 ## Team split
 
 | Owner | Workstream |
@@ -68,7 +87,7 @@ installed in the Docker image (a plain Windows/macOS Python run cannot OCR them)
 
 1. Put the participant files in `dataset/` (`deletion_requests.csv`, `user_identities.csv`,
    `user_audit_log.csv`, `system_activity.csv`, `deletion_rules.csv`, `evidence_files.csv`,
-   `evidence/`). `dataset/` is gitignored and is not part of `code.zip`.
+   `evidence/`). `dataset/` is tracked in the repository (it is the official participant data) and is not part of `code.zip`.
 2. Build once, then generate `output.csv` at the repository root:
 
    ```bash

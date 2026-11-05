@@ -21,9 +21,10 @@ runs:
     - name: Nothing forbidden is tracked
       shell: bash
       run: |
-        # AGENTS.md section 4/6.9: no dataset copies, secrets, caches or environments in git.
+        # AGENTS.md section 4/6.9: no secrets, caches or environments in git. dataset/ is allowed: it is
+        # the official participant data and part of the required repository layout.
         forbidden=$(git ls-files \
-          | grep -E '^(dataset/|\.env$|\.env\.|\.venv/|\.slam-cache/|usage-private/)|__pycache__/|\.pyc$' \
+          | grep -E '^(\.env$|\.env\.|\.venv/|\.slam-cache/|usage-private/)|__pycache__/|\.pyc$' \
           | grep -vx '\.env\.example' || true)
         if [ -n "$forbidden" ]; then
           echo "::error title=Forbidden files tracked::These must never be committed:"

@@ -4,7 +4,7 @@ workstream: Integration, seam tests, CI, packaging
 status: READY_FOR_INTEGRATION
 contract_version: 1.1.0
 contract_sha256: 95cfa189ae07490fe5b42527dc08990b50779d83fa7a82965caefeeb28275a23
-built_on: 21a90f7745e37e4ce515a04445d48259145de3ed
+built_on: acd591931632445ae03f8b5c3e4f5b9d131642a4
 merge_after: none
 last_updated: 2026-11-05
 ---
@@ -15,7 +15,13 @@ last_updated: 2026-11-05
 
 ## Delivers
 
-**This PR (on top of `main` 21a90f7):** an insight layer and a finished console page, both read-only over the pipeline. `output.csv` is byte-identical (sha256 55fabff2...edb81), a normal run still makes 0 model calls, and a model never decides a status or a step.
+**This PR (promotes `dev` to `main` with the final repository layout):** `dev` carries PR #14 (insight layer and console); this PR adds the layout the challenge asks for and nothing else.
+- Root files: `output.csv` (the 518 answers, sha256 55fabff2...edb81, unchanged), `log.txt`, `CLAUDE.md` (points to `AGENTS.md`), `problem_statement.md` and `agent_trace_instructions.md` (byte-identical copies of `team_handoff/reference/`).
+- `dataset/` is now tracked (4.1 MB, 103 official files). `.gitignore` no longer ignores it and the CI "nothing forbidden is tracked" check no longer lists it; `.env`, virtual environments, caches and `.slam-cache/` stay forbidden. It is still never part of `code.zip` (`scripts/build_submission.py`).
+- `results/`: written by the run itself through `code/slam/results.py`: `run_summary.json` and `sample_scores.json` from `python code/main.py --dataset dataset`, `insight_summary.json` from `--insight`. Deterministic, no timestamps.
+- README: "Repository layout" section.
+
+**PR #14 (already in `dev`):** an insight layer and a finished console page, both read-only over the pipeline. `output.csv` is byte-identical (sha256 55fabff2...edb81), a normal run still makes 0 model calls, and a model never decides a status or a step.
 - `code/slam/pipeline.py`: `audit_cases` returns each case's context and validated answer; `answer_cases` now delegates to it (same behaviour).
 - `code/slam/insight/`: `facts.py` (labels from the audit; features from the workflow's claims only, with a test that two cases with equal claims and opposite verdicts get equal features), `predict.py` (LightGBM, out-of-fold scores, TreeSHAP drivers, baselines, held-out check against the 32 published answers), `patterns.py` (DBSCAN on failure signatures, time-aware "unseen"), `graph.py` (recreation paths in Neo4j and NetworkX, cross-checked, NetworkX when no server), `explain.py` (the language-model prompt, schema, grounding check and rule-based fallback), `build.py` (writes `dashboard/insight_data.json` and `dashboard/insight_prompt.md`).
 - `python code/main.py --dataset dataset --insight [--insight-llm N]`, with the Groq provider when `SLAM_MODEL_PROVIDER=groq` is passed; the call and token ceilings of the existing metering apply.
@@ -61,7 +67,7 @@ Branch `integration/reconstruction`: Manya's reconstruction merged intact (`152b
 
 Each file below is another owner's; the owner must confirm.
 
-- `code/main.py` - Lalith: `--insight`, `--insight-llm` and `--serve*` only; the default path is unchanged; Lalith to confirm
+- `code/main.py` - Lalith: `--insight`, `--insight-llm`, `--serve*`, and after a successful run it writes `results/*.json` (extra output only, `output.csv` is unchanged); Lalith to confirm
 - `code/slam/config.py` - Lalith: three optional `NEO4J_*` settings; every existing setting and validation is unchanged; Lalith to confirm
 - `pyproject.toml`, `uv.lock` - Lalith: dependencies listed under "Contract and dependency requests"; Lalith to confirm
 - `docker-compose.yml` - Lalith: the optional `neo4j` service and its volume, and the `console` service (profile `console`); the default services are unchanged; Lalith to confirm

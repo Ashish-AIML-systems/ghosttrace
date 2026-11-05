@@ -134,6 +134,11 @@ owns = [
   "code/slam/insight/**",
   "tests/insight/**",
   "dashboard/**",
+  # Final repository layout: the official data, what a run writes, and the code that writes it.
+  "dataset/**",
+  "results/**",
+  "output.csv",
+  "code/slam/results.py",
   "scripts/run_console.ps1",
   "scripts/run_console.cmd",
   "scripts/run_console.sh",
