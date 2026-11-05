@@ -45,3 +45,25 @@ Timing signatures learned and validated at run time (nothing is hard-coded):
 | Timing left 2-6 candidate accounts | batches share report times | learned status/result agreement filter: 97 -> 127 of 165 correct, 0 wrong |
 
 Step F1 on the official samples moved 0.335 -> 0.441 (order) -> 0.456 (linking) -> 0.701 (parser, retained checks, agreement). Remaining gaps and the evidence for each are in `docs/integration/RCA_ACCURACY.md`: 7 hand-made teaching cases in a different timing regime, 7 inherently ambiguous cases (request order, case number and activity-id order were tested as tiebreakers and are at chance), 2 support-record delete-vs-redact cases.
+
+## Model cross-check (optional pass, nothing here feeds `output.csv`)
+
+Provider `groq`, model `qwen/qwen3.8-27b`. The two model fallbacks never fire on this dataset, so they were called on purpose and compared with the rules and with OCR. Agreement is not accuracy: HackerRank publishes no answers for these requests, and neither the rules nor the model is ground truth.
+
+**Request intent:** 60 requests sampled (every request the rules did not call a deletion, then evenly spaced ones); 0 had no usable model answer; of 60 compared, 60 agree with the rules (100.0%).
+
+**Screenshots:** model read 37 identifiers against OCR's 58; 33 in common (OCR identifiers the model also found: 56.9%; model identifiers OCR also found: 89.2%).
+
+| file | OCR ids | model ids | shared | model issues |
+|---|---|---|---|---|
+| evidence_04 | 7 | 2 | 2 | IMAGE_MODEL_RECORD_REJECTED |
+| evidence_09 | 6 | 4 | 4 | - |
+| evidence_14 | 4 | 4 | 4 | IMAGE_MODEL_RECORD_REJECTED |
+| evidence_19 | 3 | 0 | 0 | IMAGE_MODEL_INVALID, IMAGE_MODEL_RECORD_REJECTED, IMAGE_MODEL_RECORD_REJECTED, IMAGE_MODEL_RECORD_REJECTED |
+| evidence_23 | 12 | 8 | 8 | - |
+| evidence_28 | 3 | 1 | 1 | IMAGE_MODEL_RECORD_REJECTED |
+| evidence_32 | 9 | 8 | 5 | - |
+| evidence_37 | 7 | 7 | 7 | - |
+| evidence_42 | 2 | 0 | 0 | IMAGE_MODEL_INVALID, IMAGE_MODEL_RECORD_REJECTED, IMAGE_MODEL_RECORD_REJECTED, IMAGE_MODEL_RECORD_REJECTED |
+| evidence_46 | 2 | 0 | 0 | IMAGE_MODEL_RECORD_REJECTED |
+| evidence_60 | 3 | 3 | 2 | - |

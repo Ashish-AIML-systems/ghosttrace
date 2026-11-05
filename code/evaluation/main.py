@@ -13,6 +13,10 @@ import argparse
 import sys
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from evaluation.model_check import ModelCheckReport
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 TARGETS = (REPO_ROOT / "code" / "evaluation", REPO_ROOT / "evaluation")
@@ -26,12 +30,19 @@ from slam.config import Settings  # noqa: E402
 
 
 def write_reports(
-    dataset: Path, full: object, settings: Settings, *, wrote_output: bool = True
+    dataset: Path,
+    full: object,
+    settings: Settings,
+    *,
+    wrote_output: bool = True,
+    model_check: ModelCheckReport | None = None,
 ) -> None:
     """Score the 32 public samples and write ``evaluation_report.md`` and ``usage_report.md``.
 
     ``wrote_output`` says whether ``full`` is the run that produced ``output.csv`` (the usual
     ``code/main.py --evaluate`` path) or a standalone report run whose answers were discarded.
+    ``model_check`` is the optional measured model pass; without it both reports state that the
+    run made no model call.
     """
 
     from slam.pipeline import RunSummary, evaluate_samples
@@ -94,18 +105,32 @@ def write_reports(
         else "Standalone full-dataset report run (same deterministic pipeline as the run that "
         "produces `output.csv`; its answers went to a temporary file)"
     )
-    usage = (
-        "# Usage report\n\n"
-        f"{run_kind} ({full.cases} cases, {full.seconds:.1f} s).\n\n"
-        f"- Model provider: `{settings.model_provider.value}`, model `{settings.model}`\n"
-        "- Model calls: 0 (the pipeline is deterministic; OCR resolved every screenshot, rules "
-        "classified every request)\n"
-        "- Input / output tokens: 0 / 0 (total 0, average 0 per request)\n"
-        "- Estimated cost: $0.00 total, $0.00 per request\n"
-        "- Per-model totals: none (no model was called)\n"
-        "- A real-provider run was never measured; the optional provider paths (ambiguous request "
-        "intent, unresolved screenshots) are exercised only with the fake provider.\n"
-    )
+    if model_check is None:
+        usage = (
+            "# Usage report\n\n"
+            f"{run_kind} ({full.cases} cases, {full.seconds:.1f} s).\n\n"
+            f"- Model provider: `{settings.model_provider.value}`, model `{settings.model}`\n"
+            "- Model calls: 0 (the pipeline is deterministic; OCR resolved every screenshot, "
+            "rules classified every request)\n"
+            "- Input / output tokens: 0 / 0 (total 0, average 0 per request)\n"
+            "- Estimated cost: $0.00 total, $0.00 per request\n"
+            "- Per-model totals: none (no model was called)\n"
+            "- A real-provider run was not measured in this run; run `python code/main.py "
+            "--dataset dataset --model-check` with a provider configured to measure the optional "
+            "model paths (ambiguous request intent, unresolved screenshots).\n"
+        )
+    else:
+        from evaluation.model_check import evaluation_section, usage_lines
+
+        evaluation += "\n" + evaluation_section(model_check)
+        usage = (
+            "# Usage report\n\n"
+            f"{run_kind} ({full.cases} cases, {full.seconds:.1f} s).\n\n"
+            "## Decision path (what produced `output.csv`)\n\n"
+            "- Model provider: none (rules and OCR only)\n"
+            "- Model calls: 0 (OCR resolved every screenshot, rules classified every request)\n"
+            "- Input / output tokens: 0 / 0, cost $0.00\n\n" + usage_lines(model_check)
+        )
     for target in TARGETS:
         target.mkdir(parents=True, exist_ok=True)
         (target / "evaluation_report.md").write_text(evaluation, encoding="utf-8")

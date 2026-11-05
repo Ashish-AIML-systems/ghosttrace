@@ -10,8 +10,10 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from evaluation.model_check import ModelCheckReport
 from slam.config import Settings
 from slam.pipeline import RunSummary
+from slam.runtime.key_pool import KeyReport
 
 from evaluation import main as report_main
 
@@ -92,6 +94,35 @@ def test_usage_report_states_the_run_it_summarises(targets: tuple[Path, Path]) -
     assert "Final full-dataset run that produced" not in standalone
     assert "Standalone full-dataset report run" in standalone
     assert "temporary file" in standalone
+
+
+def test_a_measured_model_check_replaces_the_zero_claim_but_keeps_the_decision_path_at_zero(
+    targets: tuple[Path, Path],
+) -> None:
+    check = ModelCheckReport(
+        provider="groq",
+        model="some-model",
+        requests_total=518,
+        attempted_calls=31,
+        input_tokens=3720,
+        output_tokens=930,
+        max_calls=60,
+        keys=(
+            KeyReport("key#1", "rejected", 1, 0, 0, 0, 0),
+            KeyReport("key#2", "active", 30, 30, 0, 3720, 930),
+        ),
+    )
+    report_main.write_reports(Path("dataset"), _summary(), Settings(), model_check=check)
+
+    usage = (targets[0] / "usage_report.md").read_text(encoding="utf-8")
+    assert "Model provider: none (rules and OCR only)" in usage  # what produced output.csv
+    assert "31 attempted, 31 succeeded, 0 failed (ceiling 60)" in usage
+    assert "key#1: rejected" in usage and "key#2: active, 30 ok / 30 tried" in usage
+    assert "never measured" not in usage and "was not measured" not in usage
+
+    evaluation = (targets[0] / "evaluation_report.md").read_text(encoding="utf-8")
+    assert "## Model cross-check" in evaluation
+    assert "Agreement is not accuracy" in evaluation
 
 
 def test_standalone_entry_point_imports_without_a_preset_python_path() -> None:
