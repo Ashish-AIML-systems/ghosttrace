@@ -294,6 +294,13 @@ function recreation(){
 function explorer(){
 var ST = {q:'', st:'ALL', rp:'ALL', pt:'ALL', ex:'ALL', so:'risk', page:0, sel:null};
 var PAGE = 25;
+/* On the Vercel deployment /api/explain answers; on the local console and in the published
+   artifact it does not, and the button below never appears. */
+var API = null;
+fetch('/api/explain?ping=1', {cache:'no-store'}).then(function(r){
+  var json = (r.headers.get('content-type') || '').indexOf('json') >= 0;
+  return r.ok && json ? r.json() : null;
+}).then(function(st){ if (st && st.live) { API = st; renderDetail(); } }).catch(function(){});
 $('#kpi-cases').innerHTML =
   tile('Evaluation cases', fmt(C.length), 'one answer row each in output.csv') +
   tile('Incomplete', fmt(S.status.INCOMPLETE || 0), 'findings, remediation plan and verification', '--bad') +
@@ -344,12 +351,18 @@ function renderDetail(){
     return;
   }
   var e = c.explain, x = e.explanation;
+  var ask = '';
+  if (API && e.source !== 'llm') {
+    ask = API.configured
+      ? '<button class="btn sm" id="cd-ask" type="button" data-ask="' + esc(c.id) + '">Explain with the model now</button><span class="muted" id="cd-ask-msg" style="font-size:12px">Live call to ' + esc(API.model) + '. The reply is checked against the case facts and dropped if it does not match.</span>'
+      : '<span class="muted" style="font-size:12px">The live model is not configured on this deployment, so the text stays rule-based.</span>';
+  }
   h += '<div class="cd-sec"><h3>Findings</h3>' + (c.findings.length ? '<div class="tscroll"><table class="steps"><thead><tr><th>#</th><th>Finding</th><th>System and resource</th><th>Policy category</th><th>Evidence</th></tr></thead><tbody>' + c.findings.map(function(f){
     return '<tr><td class="num">' + f[0] + '</td><td class="mono">' + esc(f[1]) + '</td><td class="mono">' + esc(f[2]) + ' / ' + esc(f[3]) + '</td><td class="mono">' + esc(f[4]) + '</td><td><span class="eid">' + esc(f[5]) + '</span></td></tr>';
   }).join('') + '</tbody></table></div>' : '<p>No single violation was found, but the evidence could not certify the deletion.</p>') + '</div>';
   if (c.paths.length) h += '<div class="cd-sec"><h3>Recreation paths into the affected systems</h3><div class="paths">' + c.paths.map(pathHtml).join('') + '</div><p class="note">From the system topology. Risks to check, not findings of this audit.</p></div>';
   h += '<div class="cd-sec"><div class="src">' + (e.source === 'llm' ? pill('p-violet', 'Written by ' + e.model) : pill('p-neutral', 'Rule-based text')) +
-    '<span class="muted" style="font-size:12px">' + (e.source === 'llm' ? 'Checked against the case facts' : esc(e.note)) + '</span></div>' +
+    '<span class="muted" style="font-size:12px">' + (e.source === 'llm' ? 'Checked against the case facts' : esc(e.note)) + '</span>' + ask + '</div>' +
     '<h3>Why it failed</h3><p>' + esc(x.why_failed) + '</p><p>' + esc(x.recreation_risk) + '</p>' +
     (x.risk_drivers.length ? '<h3 style="margin-top:12px">What the claims suggest</h3><div class="drv">' + x.risk_drivers.map(function(t){ return '<span>' + esc(t) + '</span>'; }).join('') + '</div>' : '') + '</div>';
   h += '<div class="cd-sec"><h3>Remediation runbook</h3>' + (x.runbook.length ? '<div class="tscroll"><table class="rb"><thead><tr><th>Step</th><th>Action</th><th>Before this</th><th>If skipped</th></tr></thead><tbody>' + x.runbook.map(function(r){
@@ -370,6 +383,19 @@ $('#cx-q').oninput = function(){ ST.q = this.value; ST.page = 0; renderList(); }
 [['cx-st','st'], ['cx-rp','rp'], ['cx-pt','pt'], ['cx-ex','ex'], ['cx-so','so']].forEach(function(p){ $('#' + p[0]).onchange = function(){ ST[p[1]] = this.value; ST.page = 0; renderList(); }; });
 $('#cx-t').onclick = function(e){ var r = e.target.closest('[data-row]'); if (!r) return; ST.sel = r.getAttribute('data-row'); renderList(); renderDetail(); };
 $('#cx-t').onkeydown = function(e){ if (e.key !== 'Enter' && e.key !== ' ') return; var r = e.target.closest('[data-row]'); if (!r) return; e.preventDefault(); ST.sel = r.getAttribute('data-row'); renderList(); renderDetail(); };
+$('#cd').onclick = function(e){
+  var b = e.target.closest ? e.target.closest('[data-ask]') : null; if (!b || b.disabled) return;
+  var id = b.getAttribute('data-ask'), msg = $('#cd-ask-msg');
+  b.disabled = true; if (msg) msg.textContent = 'Asking the model...';
+  fetch('/api/explain?case=' + encodeURIComponent(id)).then(function(r){
+    return r.json().then(function(j){ if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status)); return j; });
+  }).then(function(j){
+    if (BY[id] && j.explain) BY[id].explain = j.explain;
+    renderList(); if (ST.sel === id) renderDetail();
+  }).catch(function(err){
+    b.disabled = false; var m = $('#cd-ask-msg'); if (m) m.textContent = 'The model call failed: ' + err.message + '. The rule-based text stays.';
+  });
+};
 $('#cx-pg').onclick = function(e){ var b = e.target.closest('button'); if (!b || b.disabled) return; ST.page += b.id === 'pg-next' ? 1 : -1; renderList(); };
 var first = filtered().filter(function(c){ return c.explain && c.explain.source === 'llm'; })[0] || filtered()[0];
 ST.sel = first ? first.id : null;
