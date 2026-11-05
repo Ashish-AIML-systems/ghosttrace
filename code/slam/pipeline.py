@@ -15,7 +15,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from slam.contracts import AuditRequest, CaseAnswer, DeletionStatus, EvidenceBundle
+from slam.contracts import (
+    AuditRequest,
+    CaseAnswer,
+    CaseContext,
+    DeletionStatus,
+    EvidenceBundle,
+)
 from slam.evaluation.scorer import EvaluationMetrics, score_outputs
 from slam.evaluation.validator import validate_output_csv
 from slam.ingestion.api import ingest, load_requests
@@ -72,14 +78,25 @@ def eligible_evidence_ids(bundle: EvidenceBundle, audit_at: datetime) -> set[str
     )
 
 
-def answer_cases(
+@dataclass(frozen=True, slots=True)
+class AuditedCase:
+    """One request with the reconstructed context and the validated answer derived from it."""
+
+    request: AuditRequest
+    context: CaseContext
+    answer: CaseAnswer
+
+
+def audit_cases(
     requests: tuple[AuditRequest, ...],
     bundle: EvidenceBundle,
     *,
     provider: ModelProvider | None = None,
     link_model: linking.LinkModel | None = None,
-) -> tuple[list[CaseAnswer], dict[str, str]]:
-    answers: list[CaseAnswer] = []
+) -> tuple[list[AuditedCase], dict[str, str]]:
+    """Reconstruct, plan and validate every request; a failing case is recorded, never guessed."""
+
+    audited: list[AuditedCase] = []
     failures: dict[str, str] = {}
     for request in requests:
         try:
@@ -89,10 +106,21 @@ def answer_cases(
                 answer = validate_answer(
                     answer, eligible_evidence_ids=eligible_evidence_ids(bundle, request.audit_at)
                 )
-            answers.append(answer)
+            audited.append(AuditedCase(request=request, context=context, answer=answer))
         except Exception as exc:  # one bad case must not stop the run
             failures[request.case_id] = f"{type(exc).__name__}: {exc}"[:300]
-    return answers, failures
+    return audited, failures
+
+
+def answer_cases(
+    requests: tuple[AuditRequest, ...],
+    bundle: EvidenceBundle,
+    *,
+    provider: ModelProvider | None = None,
+    link_model: linking.LinkModel | None = None,
+) -> tuple[list[CaseAnswer], dict[str, str]]:
+    audited, failures = audit_cases(requests, bundle, provider=provider, link_model=link_model)
+    return [item.answer for item in audited], failures
 
 
 def run(
