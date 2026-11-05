@@ -1,0 +1,85 @@
+name: SLAM python gate
+description: >-
+  Locked-environment compatibility checks shared by the push and merge pipelines.
+  Offline only: the fake model provider is used and no secret is read.
+
+runs:
+  using: composite
+  steps:
+    - name: Shared foundation is present
+      shell: bash
+      run: |
+        missing=0
+        for f in pyproject.toml uv.lock code/slam/contracts.py contracts/SCHEMA_SHA256; do
+          if [ ! -f "$f" ]; then
+            echo "::error title=Foundation missing::$f is missing. This branch predates the shared foundation; merge the integration baseline first."
+            missing=1
+          fi
+        done
+        exit "$missing"
+
+    - name: Nothing forbidden is tracked
+      shell: bash
+      run: |
+        # AGENTS.md section 4/6.9: no dataset copies, secrets, caches or environments in git.
+        forbidden=$(git ls-files \
+          | grep -E '^(dataset/|\.env$|\.env\.|\.venv/|\.slam-cache/|usage-private/)|__pycache__/|\.pyc$' \
+          | grep -vx '\.env\.example' || true)
+        if [ -n "$forbidden" ]; then
+          echo "::error title=Forbidden files tracked::These must never be committed:"
+          echo "$forbidden"
+          exit 1
+        fi
+        if git grep -nIE 'sk-[A-Za-z0-9_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY-----' -- . ':(exclude)uv.lock'; then
+          echo "::error title=Possible secret::A key-like string is committed (see lines above)."
+          exit 1
+        fi
+
+    - name: Install uv
+      # v10.3.3 -- uv version matches the Dockerfile pin so CI and the platform image agree.
+      uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2
+      with:
+        version: "0.13.7"
+        python-version: "3.11"
+        enable-cache: true
+        cache-dependency-glob: uv.lock
+
+    - name: Install OCR engine (used by image ingestion)
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y -qq --no-install-recommends tesseract-ocr
+
+    - name: Lockfile matches pyproject.toml
+      shell: bash
+      run: uv lock --check
+
+    - name: Install locked dependencies
+      shell: bash
+      run: uv sync --frozen
+
+    - name: Ruff
+      shell: bash
+      run: uv run --frozen ruff check code tests scripts
+
+    - name: Mypy (strict)
+      shell: bash
+      run: uv run --frozen mypy code/slam code/main.py
+
+    - name: Tests (offline, fake provider)
+      shell: bash
+      env:
+        SLAM_MODEL_PROVIDER: fake
+      run: uv run --frozen pytest -q -rs
+
+    - name: Contract schema matches contracts.py
+      shell: bash
+      run: |
+        # The generated JSON schema and hash are the cross-team contract. Regenerate and
+        # fail if the committed copy differs (changes need Lalith's approval + all four notified).
+        uv run --frozen python scripts/export_contracts.py > /dev/null
+        if [ -n "$(git status --porcelain -- contracts)" ]; then
+          echo "::error title=Contract drift::contracts/ is out of date with code/slam/contracts.py. Run scripts/export_contracts.py and commit the result."
+          git --no-pager diff --stat -- contracts
+          exit 1
+        fi

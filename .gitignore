@@ -7,6 +7,9 @@
 .slam-cache/
 usage-private/
 
+# participant data is local input and must never be committed
+dataset/
+
 # python
 .venv/
 __pycache__/

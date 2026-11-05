@@ -4,7 +4,7 @@
 
 Build the deterministic Judge–Evidence–Verify pipeline. Your subsystem consumes Manya's `CaseContext`, applies the supplied policy to every relevant record/process, decides the supported status, produces the exact ordered findings/remediation/verification steps, validates them, and exports compliant CSV rows. You do not parse raw evidence, resolve identities, or call models for the final decision.
 
-Read root `AGENTS.md`, `problem_statement.md`, and `team_handoff/SHARED_BUILD_CONTRACT.md`. Contract version `1.0.0` is frozen.
+Read root `AGENTS.md`, `problem_statement.md`, and `team_handoff/SHARED_BUILD_CONTRACT.md`. Contract version `1.1.0` is current; use the schema hash in `contracts/SCHEMA_SHA256`.
 
 ## Owned paths
 
@@ -76,7 +76,7 @@ No model call is allowed in policy evaluation, status assignment, step generatio
 ## AI coding agent start prompt
 
 ```text
-Read AGENTS.md, problem_statement.md, SHARED_BUILD_CONTRACT.md, and this document. Implement only code/slam/planning and tests/planning for contract 1.0.0. Start with an output/step validator and failing policy fixtures. Consume CaseContext and implement deterministic Judge–Evidence–Verify behavior from deletion_rules.csv. Do not parse evidence, resolve identity, or call an AI model. Enforce exact statuses, phases, operations, states, evidence rules, dependency ordering, numbering, JSON serialization, and CSV columns. Unknown or conflicted context must never become false COMPLETE. Do not hardcode sample IDs/answers. Do not edit contracts or locks; request changes. Run contract tests, owned tests, Ruff, and mypy in Docker and finish with changed files, command results, failures/limitations, and contract requests.
+Read AGENTS.md, problem_statement.md, SHARED_BUILD_CONTRACT.md, and this document. Implement only code/slam/planning and tests/planning for contract 1.1.0. Use `CaseContext.policy_rules`; validate participant-visible evidence IDs against `CaseContext.evidence_captured_at` and the request's `audit_at`. Export via `export_output_csv(answers, required_case_ids, path) -> None`. Start with an output/step validator and failing policy fixtures. Consume CaseContext and implement deterministic Judge–Evidence–Verify behavior from deletion_rules.csv. Do not parse evidence, resolve identity, or call an AI model. Enforce exact statuses, phases, operations, states, evidence rules, dependency ordering, numbering, JSON serialization, and CSV columns. Unknown or conflicted context must never become false COMPLETE. Do not hardcode sample IDs/answers. Do not edit contracts or locks; request changes. Run contract tests, owned tests, Ruff, and mypy in Docker and finish with changed files, command results, failures/limitations, and contract requests.
 ```
 
 ## Delivery to Lalith

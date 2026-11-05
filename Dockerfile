@@ -11,7 +11,7 @@ FROM ${RUNTIME_BASE} AS runtime
 ARG PYTHON_VERSION
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates libgomp1 libgl1 libglib2.0-0 \
+ && apt-get install -y --no-install-recommends ca-certificates libgomp1 libgl1 libglib2.0-0 tesseract-ocr \
  && rm -rf /var/lib/apt/lists/*
 
 COPY --from=uv /uv /uvx /bin/
@@ -33,4 +33,4 @@ RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
 
 WORKDIR /workspace
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["pytest", "-q"]
+CMD ["/bin/sh", "-c", "if [ -f pyproject.toml ]; then pytest -q; else python -c \"import sqlite3, sys; sqlite3.connect(':memory:').execute('create virtual table t using fts5(x)'); print('SLAM Docker foundation ready: Python ' + sys.version.split()[0] + ', SQLite FTS5 ok')\"; fi"]

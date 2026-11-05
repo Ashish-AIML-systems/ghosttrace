@@ -1,0 +1,132 @@
+# Single source of truth for "who owns which paths" and "how a delivery note is judged".
+#
+# Read by scripts/delivery_check.py (CI gate + integrator preflight). The prose in
+# DEPENDENCY_MATRIX.md and the PR template point here instead of repeating it.
+#
+# Pattern syntax: "*" matches within one path segment, "**" matches across segments.
+# Changing THIS file changes the rules for everybody, so it is itself a checked path
+# (see always_checked) and belongs to the integration owner.
+
+[roles]
+# The person who merges into dev/main and runs the preflight. This is a role, not a path
+# owner: moving it to someone else only changes who gets asked, never who may edit what.
+integrator = "ashish"
+# Who must approve and announce any change to code/slam/contracts.py or contracts/**.
+contract_approver = "lalith"
+
+[notes]
+dir = "docs/integration/deliveries"
+changelog = "docs/integration/CONTRACT_CHANGELOG.md"
+# A workstream's merge is blocked until every owner in its `merge_after` is INTEGRATED.
+# Informational order used by `status`; the per-note `merge_after` field is what is enforced.
+order = ["ashish", "manya", "satvika", "lalith", "integration"]
+
+[checks]
+# Paths that never need a delivery note on their own (pure documentation / transcripts).
+exempt = ["docs/**", "team_handoff/**", "*.md", "log.txt"]
+# ...except these, which change the rules of the gate itself.
+always_checked = ["docs/integration/ownership.toml"]
+# Touching any of these is a contract change: CONTRACT_CHANGELOG.md must change in the same PR
+# and the author's note must carry the regenerated hash.
+contract_paths = ["code/slam/contracts.py", "contracts/**"]
+contract_hash_file = "contracts/SCHEMA_SHA256"
+contract_version_file = "contracts/CONTRACT_VERSION"
+# Touching any of these is a dependency change: the note's dependency section cannot say "None".
+dependency_paths = ["pyproject.toml", "uv.lock", "Dockerfile", "docker-compose.yml"]
+# Files where two workstreams are known to collide. The preflight prints a warning when a branch
+# touches one, so the integrator knows to expect (and resolve in order) a textual conflict.
+hotspots = [
+  "tests/contracts/test_owned_boundaries.py",
+  "pyproject.toml",
+  "uv.lock",
+  "README.md",
+  "code/main.py",
+  "code/slam/runtime/orchestrator.py",
+  "code/slam/contracts.py",
+  "contracts/**",
+]
+
+[owners.ashish]
+name = "Ashish"
+branch = "ashish"
+workstream = "Evidence ingestion"
+owns = [
+  "code/slam/ingestion/**",
+  "tests/ingestion/**",
+  "tests/fixtures/ingestion/**",
+  "docs/integration/deliveries/ashish.md",
+]
+
+[owners.manya]
+name = "Manya"
+branch = "manya"
+workstream = "Request intent, identity, temporal state, dependency graph"
+owns = [
+  "code/slam/reconstruction/**",
+  "tests/reconstruction/**",
+  "tests/fixtures/reconstruction/**",
+  "docs/integration/deliveries/manya.md",
+]
+
+[owners.satvika]
+name = "Satvika"
+branch = "satvika"
+workstream = "Policy, decision, ordered steps, CSV export"
+owns = [
+  "code/slam/planning/**",
+  "tests/planning/**",
+  "tests/fixtures/planning/**",
+  "docs/integration/deliveries/satvika.md",
+]
+
+[owners.lalith]
+name = "Lalith"
+branch = "lalith"
+workstream = "Contracts, runtime, evaluation, Docker"
+owns = [
+  "pyproject.toml",
+  "uv.lock",
+  "Dockerfile",
+  "docker-compose.yml",
+  ".env.example",
+  "README.md",
+  "docker/**",
+  "db/**",
+  "code/main.py",
+  "code/slam/contracts.py",
+  "code/slam/config.py",
+  "code/slam/runtime/**",
+  "code/evaluation/**",
+  "code/slam/evaluation/**",
+  "contracts/**",
+  "scripts/export_contracts.py",
+  "tests/contracts/**",
+  "tests/runtime/**",
+  "tests/evaluation/**",
+  "tests/fixtures/shared/**",
+  "docs/CONTRACT_DECISIONS.md",
+  "docs/integration/deliveries/lalith.md",
+]
+
+# Pseudo-owner for work done by whoever holds the integrator role: wiring, seam tests, CI,
+# the playbook, and recording merge results. Branches named integration/<topic>.
+[owners.integration]
+name = "Integrator"
+branch = "integration"
+workstream = "Integration, seam tests, CI, packaging"
+owns = [
+  ".github/**",
+  "scripts/delivery_check.py",
+  "tests/integration/**",
+  "docs/integration/**",
+  "team_handoff/**",
+  "docs/REVISED_SLAM_PLAN.md",
+  # Files the integrator added in PR #5, #7 and #8 that no workstream owns: the end-to-end
+  # run, the smoke test, the code.zip builder, the side-by-side sample report and the ignore list.
+  ".gitignore",
+  "code/slam/__init__.py",
+  "code/slam/pipeline.py",
+  "evaluation/side_by_side_samples.md",
+  "scripts/build_submission.py",
+  "scripts/smoke_test.py",
+]

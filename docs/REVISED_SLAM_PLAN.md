@@ -4,7 +4,7 @@ Status: approved build plan, not a completed implementation
 
 Architecture revision: API-model access, portable deterministic audit engine
 
-Shared contract: `team_handoff/SHARED_BUILD_CONTRACT.md` version `1.0.0`
+Shared contract: `team_handoff/SHARED_BUILD_CONTRACT.md` version `1.1.0`
 
 ## 1. Product to build
 
@@ -102,7 +102,7 @@ For incomplete cases, findings cite evidence. Future remediation and future veri
 - Satvika owns policy evaluation, final decision, deterministic steps, validation, and CSV export.
 - Lalith owns shared contracts, Docker, API adapters, caching and metering, orchestration, evaluation, integration, and packaging.
 
-Each role has a self-contained guide and AI-agent prompt under `team_handoff/`. All modules integrate only through shared contract version `1.0.0`. Shared contract and configuration changes are coordinated centrally instead of being silently rewritten by a single branch.
+Each role has a self-contained guide and AI-agent prompt under `team_handoff/`. All modules integrate only through shared contract version `1.1.0`. Shared contract and configuration changes are coordinated centrally instead of being silently rewritten by a single branch.
 
 ## 8. Evaluation before tuning
 
