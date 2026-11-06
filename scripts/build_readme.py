@@ -492,6 +492,186 @@ def failures(f: Facts) -> str:
     return svg(w, h, body, GROW_CSS, "Findings left behind by incomplete deletions", "Bar chart of finding types across all incomplete deletions.", DEFS_COMMON)
 
 
+# ---------------------------------------------------------------- verdicts
+def verdicts(f: Facts) -> str:
+    w, h = 1200, 318
+    st = f.statuses
+    total = sum(st.values()) or 1
+    rows = [
+        ("INCOMPLETE", RED, "findings, a fix plan and checks"),
+        ("COMPLETE", GREEN, "every copy compliant, proof attached"),
+        ("NOT_APPLICABLE", GRAY, "the request is not a deletion"),
+    ]
+    body = bg(w, h) + f'<text x="40" y="46" font-size="22" font-weight="800" fill="{INK}">Verdicts on all {total} requests</text>'
+    body += f'<text x="40" y="72" font-size="13" fill="{MUTE}">What the audit decided for every deletion request. These are the agent&#8217;s verdicts, not a measure of accuracy.</text>'
+    bar_x, bar_w, gap = 40.0, 1120.0, 3.0
+    x_seg = bar_x
+    for i, (key, color, desc) in enumerate(rows):
+        n = st.get(key, 0)
+        x = 40 + i * 380
+        d = f"{i * 0.25:.2f}s"
+        body += (
+            f'<rect x="{x}" y="96" width="360" height="124" rx="16" fill="{CARD}" stroke="{color}" stroke-opacity=".6" stroke-width="1.5"/>'
+            f'<rect x="{x + 16}" y="96" width="328" height="4" rx="2" fill="{color}"/>'
+            f'<text class="m" x="{x + 22}" y="134" font-size="13" font-weight="700" letter-spacing="1" fill="{color}">{key}</text>'
+            f'<text class="lbl" style="--d:{d}" x="{x + 22}" y="190" font-size="54" font-weight="800" fill="{INK}">{n}</text>'
+            f'<text class="lbl" style="--d:{d}" x="{x + 338}" y="190" font-size="28" font-weight="800" text-anchor="end" fill="{color}">{pct(n / total)}</text>'
+            f'<text x="{x + 22}" y="212" font-size="12" fill="{MUTE}">{esc(desc)}</text>'
+        )
+        seg_w = max(2.0, n / total * bar_w - gap)
+        body += f'<rect class="seg" style="--d:{d}" x="{x_seg:.1f}" y="248" width="{seg_w:.1f}" height="18" rx="5" fill="{color}" fill-opacity=".9"/>'
+        x_seg += n / total * bar_w
+    body += f'<text x="40" y="{h - 18}" font-size="11.5" fill="{MUTE}">proportions of the {total} cases in output.csv · source: results/run_summary.json</text>'
+    return svg(w, h, body, GROW_CSS, "Verdicts on all requests", "Cards and a proportional bar for INCOMPLETE, COMPLETE and NOT_APPLICABLE verdicts.", DEFS_COMMON)
+
+
+# ---------------------------------------------------------------- failure patterns
+def patterns_chart(f: Facts) -> str:
+    pats = [p for p in f.patterns if p["id"] != "NOISE"][:8]
+    incomplete = f.statuses.get("INCOMPLETE", 0) or 1
+    covered = sum(p["cases"] for p in pats)
+    rowh = 40
+    w, h = 1200, 112 + len(pats) * rowh + 44
+    scale = 440 / max(p["cases"] for p in pats)
+    body = bg(w, h) + f'<text x="40" y="46" font-size="22" font-weight="800" fill="{INK}">{len(pats)} patterns explain {pct(covered / incomplete, 0)} of the {incomplete} incomplete deletions</text>'
+    body += f'<text x="40" y="72" font-size="13" fill="{MUTE}">DBSCAN groups cases by the kind of ghost they left behind. Fix the biggest pattern first.</text>'
+    for i, p in enumerate(pats):
+        y = 100 + i * rowh
+        d = f"{i * 0.15:.2f}s"
+        n = p["cases"]
+        body += (
+            f'<rect x="40" y="{y}" width="44" height="26" rx="8" fill="#1c2548"/>'
+            f'<text class="m" x="62" y="{y + 18}" font-size="13" font-weight="700" text-anchor="middle" fill="{VIOLET}">{esc(p["id"])}</text>'
+            f'<text x="100" y="{y + 18}" font-size="12.5" fill="{INK}">{esc(p["label"])}</text>'
+            f'<rect class="seg" style="--d:{d}" x="640" y="{y}" width="{n * scale:.1f}" height="26" rx="6" fill="{VIOLET}" fill-opacity=".9"/>'
+            f'<text class="lbl" style="--d:{d}" x="{640 + n * scale + 12:.1f}" y="{y + 19}" font-size="16" font-weight="800" fill="{INK}">{n}</text>'
+        )
+    body += f'<text x="40" y="{h - 18}" font-size="11.5" fill="{MUTE}">cases per DBSCAN cluster · source: results/insight_summary.json · the smaller clusters are in dashboard/insight_data.json</text>'
+    return svg(w, h, body, GROW_CSS, "Failure patterns", "Horizontal bars of the eight largest failure patterns.", DEFS_COMMON)
+
+
+# ---------------------------------------------------------------- decision flow
+WIRE = {"b": "#7083b8", "g": GREEN, "r": RED, "n": GRAY}
+
+
+def _wire(d: str, kind: str = "b") -> str:
+    return f'<path class="wire" d="{d}" fill="none" stroke="{WIRE[kind]}" stroke-width="2" marker-end="url(#ah-{kind})"/>'
+
+
+def _tag(cx: float, cy: float, text: str, color: str) -> str:
+    tw = len(text) * 6.6 + 16
+    return (
+        f'<rect x="{cx - tw / 2:.1f}" y="{cy - 10}" width="{tw:.1f}" height="20" rx="10" fill="{BG0}" stroke="{color}" stroke-opacity=".8"/>'
+        f'<text class="m" x="{cx}" y="{cy + 4}" font-size="11" font-weight="700" text-anchor="middle" fill="{color}">{esc(text)}</text>'
+    )
+
+
+def _node(x: int, y: int, w: int, h: int, color: str, title: str, lines: list[str], num: int | None = None, count: int | None = None) -> str:
+    out = f'<rect class="node" x="{x}" y="{y}" width="{w}" height="{h}" rx="14" fill="{CARD}" stroke="{color}" stroke-opacity=".75" stroke-width="1.5"/>'
+    tx, first = x + 16, y + 50
+    if num is not None:
+        out += f'<circle cx="{x + 24}" cy="{y + 27}" r="11" fill="{color}"/><text x="{x + 24}" y="{y + 32}" font-size="13" font-weight="800" text-anchor="middle" fill="{BG0}">{num}</text>'
+        tx, first = x + 44, y + 58
+    out += f'<text x="{tx}" y="{y + 32}" font-size="15" font-weight="800" fill="{INK if num is not None else color}">{esc(title)}</text>'
+    for i, line in enumerate(lines):
+        out += f'<text x="{x + 16}" y="{first + i * 16}" font-size="12" fill="{MUTE}">{esc(line)}</text>'
+    if count is not None:
+        out += f'<text x="{x + w - 16}" y="{y + 32}" font-size="20" font-weight="800" text-anchor="end" fill="{INK}">{count}</text>'
+    return out
+
+
+def _diamond(cx: int, cy: int, hw: int, hh: int, color: str, lines: list[str]) -> str:
+    pts = f"{cx - hw},{cy} {cx},{cy - hh} {cx + hw},{cy} {cx},{cy + hh}"
+    out = f'<polygon class="dia" points="{pts}" fill="{CARD}" stroke="{color}" stroke-opacity=".9" stroke-width="1.5"/>'
+    y0 = cy - (len(lines) - 1) * 8 + 4
+    for i, line in enumerate(lines):
+        out += f'<text x="{cx}" y="{y0 + i * 16}" font-size="12.5" font-weight="600" text-anchor="middle" fill="{INK}">{esc(line)}</text>'
+    return out
+
+
+def decision(f: Facts) -> str:
+    w, h = 1200, 690
+    st = f.statuses
+    defs = DEFS_COMMON + "".join(
+        f'<marker id="ah-{k}" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="{c}"/></marker>'
+        for k, c in WIRE.items()
+    )
+    routes = [
+        (GRAY, "M30 150H320V300", 8.0, 0.0),
+        (GREEN, "M30 150H1093V262H700V385H250", 13.0, -3.0),
+        (RED, "M30 150H1093V262H700V385H1035V470H677V546H1165", 17.0, 0.0),
+        (RED, "M30 150H1093V262H700V385H1035V470H677V546H1165", 17.0, -8.5),
+    ]
+    dots = "".join(
+        f'<circle r="5.5" fill="{c}" filter="url(#glow)"><animateMotion dur="{d}s" begin="{b}s" repeatCount="indefinite" path="{p}"/></circle>'
+        for c, p, d, b in routes
+    )
+    wires = (
+        _wire("M190 150H223")
+        + _wire("M415 150H448")
+        + _wire("M603 150H637")
+        + _wire("M792 150H826")
+        + _wire("M981 150H1015")
+        + _wire("M320 212V268", "n")
+        + _wire("M1093 210V262H700V308")
+        + _wire("M560 385H502", "g")
+        + _wire("M840 385H898", "r")
+        + _wire("M1035 425V470H677V498", "r")
+        + _wire("M765 546H788")
+        + _wire("M965 546H988")
+    )
+    tags = _tag(432, 134, "yes", TEAL) + _tag(320, 240, "no", GRAY) + _tag(531, 368, "yes", GREEN) + _tag(869, 368, "no", RED)
+    nodes = (
+        f'<rect x="30" y="115" width="160" height="70" rx="35" fill="{CARD}" stroke="{TEAL}" stroke-opacity=".8" stroke-width="1.5"/>'
+        f'<text x="110" y="145" font-size="14" font-weight="800" text-anchor="middle" fill="{INK}">Deletion request</text>'
+        f'<text x="110" y="164" font-size="11" text-anchor="middle" fill="{MUTE}">email · audit_at · text</text>'
+        + _diamond(320, 150, 95, 62, TEAL, ["Does the text", "ask for deletion?"])
+        + _node(450, 90, 153, 120, VIOLET, "Resolve who", ["current and past", "email, phone, hash", "→ one stable user"], num=1)
+        + _node(639, 90, 153, 120, VIOLET, "Cut off", ["evidence after", "audit_at is excluded;", "claims are not proof"], num=2)
+        + _node(828, 90, 153, 120, VIOLET, "Rebuild state", ["every system and", "resource; replicas and", "conflicts stay apart"], num=3)
+        + _node(1017, 90, 153, 120, VIOLET, "Find flows", ["sync, import and", "restore paths that", "can bring data back"], num=4)
+        + _node(205, 270, 230, 60, GRAY, "NOT_APPLICABLE", ["steps_json = []"], count=st.get("NOT_APPLICABLE", 0))
+        + _diamond(700, 385, 140, 75, AMBER, ["Every copy compliant,", "retained records present,", "no flow or restore path,", "nothing uncertain?"])
+        + _node(240, 345, 260, 80, GREEN, "COMPLETE", ["VERIFICATION steps only, each", "citing the evidence that proves it"], count=st.get("COMPLETE", 0))
+        + _node(900, 345, 270, 80, RED, "INCOMPLETE", ["any violation, active flow, restore", "path or uncertainty ends here"], count=st.get("INCOMPLETE", 0))
+        + _node(590, 500, 175, 92, VIOLET, "FINDING", ["what is still there,", "each with an evidence id"], num=1)
+        + _node(790, 500, 175, 92, VIOLET, "REMEDIATION", ["stop flows, block", "restores, fix records"], num=2)
+        + _node(990, 500, 175, 92, VIOLET, "VERIFICATION", ["the checks that must", "pass after the fix"], num=3)
+    )
+    rules = [
+        "A workflow status is a claim. Only evidence at audit_at counts.",
+        "Evidence captured after audit_at is ignored, even if it is clearer.",
+        "Retained records must stay; a tombstone keeps only the user id.",
+        "A missing result or a failed parse never proves a record is gone.",
+    ]
+    panel = (
+        f'<rect x="30" y="470" width="510" height="170" rx="14" fill="none" stroke="{TEAL}" stroke-opacity=".55" stroke-width="1.5"/>'
+        f'<text class="m" x="52" y="500" font-size="12.5" font-weight="700" letter-spacing="2" fill="{TEAL}">RULES THAT NEVER BEND</text>'
+        + "".join(
+            f'<circle cx="58" cy="{526 + i * 28}" r="4" fill="{TEAL}"/><text x="74" y="{530 + i * 28}" font-size="12.5" fill="{INK}">{esc(r)}</text>'
+            for i, r in enumerate(rules)
+        )
+    )
+    body = (
+        bg(w, h)
+        + f'<text class="m" x="40" y="44" font-size="14" letter-spacing="2" fill="{TEAL}">HOW A VERDICT IS DECIDED</text>'
+        + f'<text x="40" y="68" font-size="13" fill="{MUTE}">Every request takes the same path. The answer comes from the evidence at audit_at, never from the workflow&#8217;s own claim.</text>'
+        + '<g transform="translate(0 14)">'
+        + dots
+        + wires
+        + nodes
+        + tags
+        + panel
+        + "</g>"
+    )
+    css = (
+        ".wire{stroke-dasharray:7 6;animation:march 1.1s linear infinite}@keyframes march{to{stroke-dashoffset:-13}}"
+        ".dia{animation:dia 3.2s ease-in-out infinite}@keyframes dia{50%{stroke-opacity:.35}}"
+        ".node{animation:node 3.2s ease-in-out infinite}@keyframes node{50%{stroke-opacity:1}}"
+    )
+    return svg(w, h, body, css, "How a verdict is decided", "Flow from a deletion request through identity, time cut-off, state and recreation checks to COMPLETE, INCOMPLETE or NOT_APPLICABLE.", defs)
+
+
 # ---------------------------------------------------------------- markdown blocks
 def badge(label: str, message: str, color: str) -> str:
     def enc(s: str) -> str:
@@ -513,30 +693,6 @@ def block_badges(f: Facts) -> str:
             badge("model calls in a normal run", "0", "fbbf24"),
         ]
     )
-
-
-def block_status_pie(f: Facts) -> str:
-    st = f.statuses
-    init = "%%{init: {'theme':'base','themeVariables':{'pie1':'#fb7185','pie2':'#4ade80','pie3':'#94a3b8','pieTitleTextSize':'18px'}}}%%"
-    rows = "\n".join(f'    "{k}" : {st[k]}' for k in ("INCOMPLETE", "COMPLETE", "NOT_APPLICABLE") if k in st)
-    return f"```mermaid\n{init}\npie showData title Verdicts on all {f.output_rows} requests\n{rows}\n```"
-
-
-def block_patterns(f: Facts) -> str:
-    pats = [p for p in f.patterns if p["id"] != "NOISE"]
-    top = pats[:8]
-    ymax = max(10, -(-int(max(p["cases"] for p in top) * 1.15) // 10) * 10)
-    chart = (
-        "```mermaid\n%%{init: {'theme':'base','themeVariables':{'xyChart':{'plotColorPalette':'#fb7185'}}}}%%\nxychart-beta\n"
-        '    title "Cases per failure pattern (DBSCAN clusters)"\n'
-        f"    x-axis [{', '.join(p['id'] for p in top)}]\n"
-        f'    y-axis "cases" 0 --> {ymax}\n'
-        f"    bar [{', '.join(str(p['cases']) for p in top)}]\n```"
-    )
-    table = "| Pattern | Cases | What it looks like |\n|---|---:|---|\n" + "\n".join(
-        f"| {p['id']} | {p['cases']} | {p['label'].replace('|', '/')} |" for p in top
-    )
-    return chart + "\n\n" + table
 
 
 def block_numbers(f: Facts) -> str:
@@ -567,8 +723,6 @@ def block_run_id(f: Facts) -> str:
 
 BLOCKS = {
     "BADGES": block_badges,
-    "STATUS_PIE": block_status_pie,
-    "PATTERNS": block_patterns,
     "NUMBERS": block_numbers,
     "RUN_ID": block_run_id,
 }
@@ -592,6 +746,9 @@ def main(argv: list[str]) -> int:
         IMG / "reality-gap.svg": reality(f),
         IMG / "scorecard.svg": scorecard(f),
         IMG / "failures.svg": failures(f),
+        IMG / "verdicts.svg": verdicts(f),
+        IMG / "patterns.svg": patterns_chart(f),
+        IMG / "decision.svg": decision(f),
         README: apply_blocks(README.read_text(encoding="utf-8"), f),
     }
     stale = [p for p, t in outputs.items() if not p.exists() or p.read_bytes().decode("utf-8") != t]

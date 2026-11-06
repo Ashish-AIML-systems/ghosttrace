@@ -45,30 +45,12 @@ GhostTrace is the agent for the HackerRank Orchestrate challenge *Ghost Data Sti
 
 ## How a verdict is decided
 
-```mermaid
-flowchart TD
-    R(["Deletion request<br/>email · requested_at · audit_at · text"]):::inp --> Q{"Does the text<br/>really authorize deletion?"}
-    Q -- no --> NA["NOT_APPLICABLE<br/>steps_json = []"]:::na
-    Q -- yes --> ID["Resolve who<br/>current and historical email, phone, hash"]
-    ID --> T["Cut off at audit_at<br/>later evidence is excluded"]
-    T --> S["Rebuild the state of every system and resource<br/>replicas and conflicts stay separate"]
-    S --> G["Find active data flows<br/>and restore paths"]
-    G --> P{"Every copy compliant, retained records present,<br/>no flow or restore path, nothing uncertain?"}
-    P -- yes --> C["COMPLETE<br/>VERIFICATION steps only,<br/>each citing the evidence that proves it"]:::ok
-    P -- "no (or unsure)" --> I["INCOMPLETE<br/>never certified on a guess"]:::bad
-    I --> F1["1 · FINDING<br/>what is still there, with evidence ids"]:::step
-    F1 --> F2["2 · REMEDIATION<br/>stop flows, block restores, then fix records"]:::step
-    F2 --> F3["3 · VERIFICATION<br/>the checks that must pass afterwards"]:::step
-    classDef inp fill:#0f1630,stroke:#2dd4bf,color:#e6edf7
-    classDef na fill:#1e293b,stroke:#94a3b8,color:#e6edf7
-    classDef ok fill:#052e1a,stroke:#4ade80,color:#e6edf7
-    classDef bad fill:#3b0d1a,stroke:#fb7185,color:#e6edf7
-    classDef step fill:#2a1f4d,stroke:#a78bfa,color:#e6edf7
-```
+<img src="docs/img/decision.svg" alt="Decision flow: a deletion request is checked for intent, identity, time cut-off, state and recreation paths, then ends as COMPLETE, INCOMPLETE or NOT_APPLICABLE" width="100%">
 
 The same journey for one request, in time order:
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#0f1630','primaryTextColor':'#e6edf7','primaryBorderColor':'#2dd4bf','actorBkg':'#0f1630','actorBorder':'#2dd4bf','actorTextColor':'#e6edf7','actorLineColor':'#7083b8','signalColor':'#7083b8','signalTextColor':'#64748b','noteBkgColor':'#2a1f4d','noteBorderColor':'#a78bfa','noteTextColor':'#e6edf7','sequenceNumberColor':'#0b1020'}}}%%
 sequenceDiagram
     autonumber
     participant Q as Request
@@ -90,15 +72,7 @@ sequenceDiagram
 
 ## What it found
 
-<!-- AUTO:STATUS_PIE:START -->
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'pie1':'#fb7185','pie2':'#4ade80','pie3':'#94a3b8','pieTitleTextSize':'18px'}}}%%
-pie showData title Verdicts on all 518 requests
-    "INCOMPLETE" : 355
-    "COMPLETE" : 153
-    "NOT_APPLICABLE" : 10
-```
-<!-- AUTO:STATUS_PIE:END -->
+<img src="docs/img/verdicts.svg" alt="Cards and a proportional bar showing how many requests ended INCOMPLETE, COMPLETE and NOT_APPLICABLE" width="100%">
 
 <img src="docs/img/failures.svg" alt="Bar chart of what incomplete deletions left behind" width="100%">
 
@@ -122,33 +96,14 @@ pie showData title Verdicts on all 518 requests
 
 DBSCAN groups the incomplete deletions by what they left behind. A handful of patterns explain most of them, which is where fixing the deletion workflow pays off first.
 
-<!-- AUTO:PATTERNS:START -->
-```mermaid
-%%{init: {'theme':'base','themeVariables':{'xyChart':{'plotColorPalette':'#fb7185'}}}}%%
-xychart-beta
-    title "Cases per failure pattern (DBSCAN clusters)"
-    x-axis [P1, P2, P3, P4, P5, P6, P7, P8]
-    y-axis "cases" 0 --> 160
-    bar [138, 68, 35, 25, 17, 16, 11, 10]
-```
-
-| Pattern | Cases | What it looks like |
-|---|---:|---|
-| P1 | 138 | search index entry · remaining record + support message · exposed pii |
-| P2 | 68 | data flow · active data flow + search index entry · remaining record |
-| P3 | 35 | search index entry · remaining record + user profile · remaining record |
-| P4 | 25 | backup archive · restore risk |
-| P5 | 17 | search index entry · remaining record + user export · remaining record |
-| P6 | 16 | support message · exposed pii |
-| P7 | 11 | data flow · active data flow |
-| P8 | 10 | user profile · remaining record |
-<!-- AUTO:PATTERNS:END -->
+<img src="docs/img/patterns.svg" alt="Horizontal bars of the eight largest failure patterns found by DBSCAN" width="100%">
 
 ## The Ghost Data Console
 
 An optional insight layer reads what the deterministic audit already decided. It never changes `output.csv`.
 
 ```mermaid
+%%{init: {'theme':'base','themeVariables':{'primaryColor':'#0f1630','primaryTextColor':'#e6edf7','primaryBorderColor':'#2dd4bf','lineColor':'#7083b8','fontSize':'15px'}}}%%
 flowchart LR
     A["Audit<br/>deterministic pipeline"] --> O[("output.csv<br/>and per-case facts")]
     O --> P["LightGBM<br/>which deletions will fail?"]
