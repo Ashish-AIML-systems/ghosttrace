@@ -14,3 +14,4 @@ Read [AGENTS.md](AGENTS.md) in full before doing anything. It is the single sour
 - **Only participant-facing data** under `dataset/` is used for predictions. Never use organizer-only files or golden labels.
 - **Secrets** come from environment variables or the uncommitted `.env`. Never commit `.env`, keys or caches.
 - **`dev` and `main` are protected.** Changes land through a pull request. Start from `AGENTS.md` and `docs/integration/README.md`.
+- **Keep `README.md` current.** Its charts and numbers are generated: after anything that changes `results/`, `dataset/*.csv` or the tests, run `python scripts/build_readme.py` (`--check` to verify). Never edit between the `AUTO` markers or inside `docs/img/*.svg`; edit the generator instead. When the pipeline, architecture or commands change, update the prose in `README.md` in the same change. The `README refresh` workflow also regenerates it on `main`.

@@ -1,0 +1,50 @@
+name: README refresh
+
+# Keeps README.md and docs/img/*.svg in step with the repository's own results.
+# scripts/build_readme.py reads results/*.json and dataset/*.csv, rewrites the animated charts and
+# the AUTO blocks of README.md, and this workflow commits the refreshed files when anything changed.
+# The commit is made with GITHUB_TOKEN, which by design does not start further workflow runs, so
+# there is no loop.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "results/**"
+      - "evaluation/**"
+      - "dataset/*.csv"
+      - "tests/**"
+      - "scripts/build_readme.py"
+      - "README.md"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: readme-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    name: Regenerate README
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      # v7.0.1 - same pin as merge-check.yml
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Regenerate charts and numbers
+        run: python3 scripts/build_readme.py
+
+      - name: Commit the refreshed README
+        run: |
+          git add README.md docs/img
+          if git diff --cached --quiet; then
+            echo "README already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "docs(readme): refresh generated charts and numbers"
+          git push
